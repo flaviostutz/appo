@@ -63,30 +63,53 @@ Home AI agent system that connects intelligent agents to physical devices, senso
 
 ## Getting started
 
-> Full setup instructions live inside each module directory. See the relevant `README.md` under `appo/`, `stutzthings/`, or `deployments/<group>/`.
+### Machine setup
 
-### Prerequisites
+1. **Install [Mise](https://mise.jdx.dev/getting-started.html)** — manages tool versions across the monorepo:
 
-- Python 3.11+ (agents, stutzthings)
-- Docker & Docker Compose (service deployments)
-- PlatformIO (ESP32 firmware)
-- Make (all modules expose a standard `Makefile`)
+   ```bash
+   curl https://mise.run | sh
+   ```
 
-### Build a module
+2. **Activate tools** — from the repository root:
+
+   ```bash
+   mise install
+   ```
+
+   This installs the exact tool versions declared in `.mise.toml` (Python, etc.).
+
+3. **Additional prerequisites** (not managed by Mise):
+   - Docker & Docker Compose — for service deployments
+   - PlatformIO — for ESP32 firmware (install via `pip install platformio`)
+   - Make — typically pre-installed on macOS/Linux
+
+   Or run:
+
+   ```bash
+   make setup
+   ```
+
+   for a printed checklist.
+
+### Quickstart
+
+Build, lint, and test all modules from the repository root:
 
 ```bash
-cd <module-dir>
-STAGE=dev make build-module
-make lint-module
-make test-module
+make build
+make lint
+make test
 ```
 
-### Deploy an environment
+Deploy a specific environment:
 
 ```bash
 cd deployments/<group>
 make deploy
 ```
+
+> Full per-module instructions live inside each directory's `README.md`.
 
 ---
 

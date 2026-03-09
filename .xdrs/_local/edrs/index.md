@@ -4,4 +4,3 @@ Project-local engineering decisions for the **appo** monorepo. Overrides general
 
 ## Structure
 
-- [_local-edr-001](001-monorepo-organization.md) - **Monorepo organization and module conventions**

@@ -20,6 +20,16 @@ General engineering decisions covering cross-business standards and practices.
 
 ---
 
+## agentkit
+
+### EDRs - general
+
+General engineering decisions covering common practices
+
+[View general EDRs Index](agentkit/edrs/index.md)
+
+---
+
 ### _local (reserved)
 
 Project-local XDRs that must not be shared with other contexts. Always keep this scope last so its decisions override or extend all scopes listed above. Add specific `_local` ADR/BDR/EDR index links here when present.
