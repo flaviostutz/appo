@@ -1,15 +1,26 @@
 # stutzthings module Makefile — IoT middleware (Python library + Docker services)
 
-.PHONY: build lint test lint-fix
+MODULES := \
+	stutzthings-server
+
+.PHONY: build lint test lint-fix $(MODULES)
 
 build:
-	@echo "[stutzthings] build — not yet configured"
+	@for dir in $(MODULES); do \
+		$(MAKE) -C $$dir build || exit 1; \
+	done
 
 lint:
-	@echo "[stutzthings] lint — not yet configured"
+	@for dir in $(MODULES); do \
+		$(MAKE) -C $$dir lint || exit 1; \
+	done
 
 test:
-	@echo "[stutzthings] test — not yet configured"
+	@for dir in $(MODULES); do \
+		$(MAKE) -C $$dir test || exit 1; \
+	done
 
 lint-fix:
-	@echo "[stutzthings] lint-fix — not yet configured"
+	@for dir in $(MODULES); do \
+		$(MAKE) -C $$dir lint-fix || exit 1; \
+	done

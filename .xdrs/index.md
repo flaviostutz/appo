@@ -6,17 +6,11 @@ This index points to all type- and scope-specific XDR indexes. XDRs (Decision Re
 
 XDRs in scopes listed last override the ones listed first
 
-### ADRs - general
+### ADRs - _core
 
 General architectural decisions covering cross-business standards and practices.
 
-[View general ADRs Index](_general/adrs/index.md)
-
-### EDRs - general
-
-General engineering decisions covering cross-business standards and practices.
-
-[View general EDRs Index](_general/edrs/index.md)
+[View general ADRs Index](_core_/adrs/index.md)
 
 ---
 
