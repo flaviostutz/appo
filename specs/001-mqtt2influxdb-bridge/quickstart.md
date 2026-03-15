@@ -7,6 +7,7 @@ Run the bridge locally for development and testing in under 5 minutes.
 - Go 1.22+ installed (`go version`)
 - Docker and Docker Compose installed
 - `make` available
+- An InfluxDB v3 database already created for the bridge (the bridge does not provision databases or tables)
 
 ## 1. Start local infrastructure
 
@@ -16,8 +17,10 @@ docker compose up -d
 ```
 
 This starts:
-- **EMQX** MQTT broker on `localhost:1883` (username: `test`, password: `test`)
+- **Mosquitto** MQTT broker on `localhost:1883` (username: `test`, password: `test`)
 - **InfluxDB v3** on `localhost:8086` (token: `dev-token`, database: `iot`)
+
+Before running the bridge, ensure the target InfluxDB database exists. In the local example above, the expected database name is `iot`.
 
 ## 2. Set environment variables
 
@@ -52,6 +55,8 @@ The server starts and the bridge goroutine logs:
 INFO  bridge: InfluxDB reachable, subscribing to MQTT wildcard (#)
 INFO  bridge: connected to mqtt://localhost:1883
 ```
+
+The host service health endpoint should report bridge state derived from MQTT connectivity, InfluxDB reachability, and buffer pressure. The bridge does not expose a standalone port; it contributes status to the server's `GET /health` response.
 
 ## 4. Publish a test message
 
@@ -102,9 +107,9 @@ Integration tests spin up their own broker and InfluxDB containers via testconta
 
 **MQTT broker outage**:
 ```bash
-docker compose stop emqx
+docker compose stop mosquitto
 sleep 15
-docker compose start emqx
+docker compose start mosquitto
 # Publish a message — bridge reconnects automatically within 10s
 mosquitto_pub -h localhost -p 1883 -u test -P test \
   -t "account1/sensor/device01/temperature/celsius" -m "25.0"
@@ -118,4 +123,10 @@ mosquitto_pub -h localhost -p 1883 -u test -P test \
   -t "account1/sensor/device01/temperature/celsius" -m "26.0"
 docker compose start influxdb
 # Bridge retries and flushes the buffer
+```
+
+**Shutdown behavior**:
+```bash
+# Stop the host service and verify it exits cleanly after a bounded flush attempt.
+# Any remaining buffered messages after 5 seconds are dropped with a warning log.
 ```

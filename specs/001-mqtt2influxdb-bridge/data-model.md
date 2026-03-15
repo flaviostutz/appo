@@ -31,6 +31,7 @@ Operational configuration loaded from environment variables at startup. Immutabl
 - `FlushIntervalMs` must be ≥ 10.
 - `MaxBufferSize` must be ≥ `BatchSize`.
 - `MaxWriteRetries` must be ≥ 0.
+- At the default `MaxBufferSize = 10000`, deployments should keep payloads at or below 1 KiB each to stay within the 32 MiB bridge-owned buffer memory budget; larger payloads require lowering `MaxBufferSize`.
 
 ---
 
@@ -74,6 +75,26 @@ A parsed, typed measurement ready for InfluxDB persistence. Produced from a vali
 
 ---
 
+### 4. BridgeHealthStatus
+
+Operational health state exported by the bridge to the host service `/health` endpoint.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Health | string | One of `OK`, `WARNING`, `ERROR` |
+| LatencyMs | int64 | Total dependency-check latency in milliseconds |
+| Message | string | Human-readable summary suitable for `/health` output |
+| MQTTConnected | bool | Whether the MQTT client is currently connected |
+| InfluxReachable | bool | Whether the latest read-only InfluxDB probe succeeded |
+| BufferUsage | int | Current number of buffered messages |
+
+**Health rules**:
+- `OK`: MQTT connected, Influx reachable, buffer usage below eviction threshold.
+- `WARNING`: bridge is still operating but dependency latency is elevated, MQTT is reconnecting, or buffer usage is elevated without active eviction.
+- `ERROR`: Influx is unreachable for health checks, the bridge cannot accept work, or the host process has marked the bridge unhealthy.
+
+---
+
 ## Payload Parsing Rules
 
 ### Accepted payload formats
@@ -87,7 +108,7 @@ A parsed, typed measurement ready for InfluxDB persistence. Produced from a vali
 | Float | `23.5`, `-0.1` | `ValueFloat` |
 | String | `on`, `off`, any other text | `ValueString` |
 
-**Detection order**: Boolean → Integer → Float → String (string is the catch-all).
+**Detection order**: Boolean → Integer → Float → String (string is the catch-all). This means raw scalar `true` is always parsed as boolean, raw scalar `1` is parsed as numeric, and quoted JSON strings such as `{ "value": "1" }` remain strings.
 
 **Format 2 — JSON object**:
 
@@ -105,9 +126,25 @@ A parsed, typed measurement ready for InfluxDB persistence. Produced from a vali
 | Condition | Action |
 |-----------|--------|
 | Topic has ≠ 5 segments | Discard + log WARNING with topic |
+| Topic matches 6-segment `/set` desired-state pattern | Discard + log WARNING with topic and reason=`set_topic_ignored` |
 | Payload is empty or null | Discard + log WARNING with topic and raw payload |
 | JSON payload missing `value` field | Discard + log WARNING with topic and raw payload |
 | `value` is JSON null | Discard + log WARNING |
+
+### Logging fields
+
+All bridge log records are structured and include:
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `component` | yes | Always `bridge` |
+| `event` | yes | Examples: `message_discarded`, `influx_retry`, `buffer_evicted`, `shutdown_drop` |
+| `topic` | for message-related events | Full MQTT topic |
+| `reason` | for warnings/discards | Machine-readable reason code |
+| `payload_sample` | for payload parse failures | Bounded sample, not full payload dump |
+| `attempt` | for retry logs | 1-based retry attempt |
+| `max_retries` | for retry logs | Configured retry ceiling |
+| `dropped_count` | for eviction/shutdown drops | Number of messages discarded |
 
 ---
 
@@ -141,5 +178,19 @@ MQTT message received
         │                         │
       Success              Max retries exhausted
         │                         │
-      Done              Discard batch + WARN
+      Done              Discard batch + WARN + continue consuming
+
+Shutdown requested
+        │
+        ▼
+  Stop MQTT intake
+        │
+        ▼
+  Flush buffer for up to 5s
+        │
+   Buffer empty? ──Yes──► Exit cleanly
+        │
+       No
+        ▼
+  Discard remaining buffered messages + WARN + Exit
 ```

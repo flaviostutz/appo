@@ -37,7 +37,7 @@ The bridge must survive temporary MQTT broker or InfluxDB unavailability without
 
 **Why this priority**: IoT environments are inherently unreliable. Loss of connectivity to either MQTT or InfluxDB must not silently discard device data or crash the daemon in a way that requires operator action.
 
-**Independent Test**: Start the bridge, stop the MQTT broker for 10 seconds, restart it, publish a message, and verify the message is stored in InfluxDB.
+**Independent Test**: Start the bridge, stop the MQTT broker for 10 seconds, restart it, publish a message, and verify that the first successfully published post-recovery message is persisted within 10 seconds of the broker becoming available. Separately, stop InfluxDB for 10 seconds, publish messages during the outage, restart InfluxDB, and verify the buffered messages are eventually persisted without restarting the process.
 
 **Acceptance Scenarios**:
 
@@ -65,9 +65,13 @@ The bridge handles data from multiple accounts and device types simultaneously, 
 ### Edge Cases
 
 - Messages received on topics that do not match the expected 5-segment hierarchy are silently discarded with a warning log (FR-008).
+- Messages received on 6-segment `/set` topics are treated as invalid ingest input, discarded, and logged as warnings because desired-state write-back is out of scope for this bridge (FR-020).
 - Empty or null message payloads are treated as unparseable and discarded with a warning log (FR-009).
 - Attribute values that cannot be parsed as numeric, string, boolean, or JSON are discarded with a warning log including topic and raw payload (FR-009).
+- Concurrent messages for the same account/device/device_instance/node/attribute may carry different scalar types; each message is stored as its own record with exactly one typed value field populated (FR-022).
+- MQTT QoS 1 may deliver duplicates during reconnect or retry scenarios; duplicate deliveries are stored as distinct records and are not deduplicated by the bridge (FR-021).
 - At startup, if InfluxDB is not yet reachable, the bridge blocks and retries with exponential backoff until InfluxDB becomes available before subscribing to MQTT (FR-014).
+- On shutdown, the bridge stops accepting new MQTT messages, attempts to flush buffered data for a bounded period, and logs a warning if any buffered messages must be dropped (FR-016).
 - InfluxDB schema conflicts (same attribute publishing different types) are avoided by using separate typed fields `value_float`, `value_string`, `value_bool` — only one is populated per write (FR-003).
 
 ## Requirements *(mandatory)*
@@ -89,6 +93,14 @@ The bridge handles data from multiple accounts and device types simultaneously, 
 - **FR-013**: The bridge MUST buffer incoming messages and write to InfluxDB in batches. A batch is flushed when either the configurable maximum batch size (number of messages) or the configurable maximum flush interval is reached, whichever comes first. Default flush interval is 100ms. Both thresholds MUST be configurable via environment variables.
 - **FR-014**: At startup, the bridge MUST verify that InfluxDB is reachable (with retries and exponential backoff) before subscribing to any MQTT topics. The bridge MUST NOT begin consuming messages until this readiness check passes.
 - **FR-015**: The bridge MUST enforce a configurable maximum in-memory buffer size (number of messages). When the buffer is full, the oldest unwritten messages MUST be evicted (FIFO) and a warning MUST be logged per evicted batch, including the count of dropped messages.
+- **FR-016**: On process shutdown, the bridge MUST stop consuming new MQTT messages, attempt to flush buffered messages for up to 5 seconds, and then exit. If buffered messages remain after the flush window, the bridge MUST discard only the remaining buffered messages and log a warning including the dropped count.
+- **FR-017**: The bridge MUST expose its operational status to the host service health check at `GET /health`. The reported health MUST reflect MQTT connectivity, InfluxDB reachability, and buffer pressure using the states `OK`, `WARNING`, and `ERROR`.
+- **FR-018**: The bridge MUST emit structured logs. Every bridge log record MUST include `component=bridge` and an `event` field; discard warnings MUST include `reason` and `topic`, payload-related discards MUST also include a bounded `payload_sample`, retry warnings MUST include `attempt` and `max_retries`, and eviction warnings MUST include `dropped_count`.
+- **FR-019**: After exhausting write retries for a batch, the bridge MUST discard only that failed batch, log the warning required by FR-007 and FR-018, and continue accepting and processing subsequent messages without entering a circuit-breaker or stopped state.
+- **FR-020**: MQTT topics matching the 6-segment desired-state pattern `[account_id]/[device_id]/[device_instance_id]/[node_name]/[attribute_name]/set` MUST be rejected by the bridge as invalid ingest input and handled exactly as malformed topics under FR-008.
+- **FR-021**: MQTT QoS 1 duplicate deliveries are allowed; the bridge MUST NOT attempt deduplication and MUST persist each delivered message independently.
+- **FR-022**: If multiple messages for the same identity path arrive with different scalar value types, the bridge MUST persist each message as a separate record with exactly one of `value_float`, `value_string`, or `value_bool` populated.
+- **FR-023**: With the default `BRIDGE_MAX_BUFFER_SIZE=10000` and payloads up to 1 KiB each, bridge-owned in-memory buffering MUST remain below 32 MiB. Deployments expecting larger payloads MUST reduce `BRIDGE_MAX_BUFFER_SIZE` accordingly.
 
 ### Key Entities
 
@@ -100,19 +112,19 @@ The bridge handles data from multiple accounts and device types simultaneously, 
 
 - MQTT topics for device attribute reporting follow the exact 5-segment hierarchy: `account_id/device_id/device_instance_id/node_name/attribute_name`. Topics with more or fewer segments are ignored.
 - Wildcard MQTT subscription (`#`) is used to receive all topics; filtering to the expected structure is done by the bridge itself.
-- InfluxDB v3 is already provisioned with a database; the bridge does not manage database or table creation.
+- InfluxDB v3 is already provisioned with a database; the bridge does not manage database or table creation. This is a deployment prerequisite.
 - The InfluxDB connection uses plain HTTP. **Security note**: for production environments, TLS MUST be enforced at the network layer (e.g., service mesh, reverse proxy, or VPN) to protect the API token and data in transit.
 - The bridge connects to the MQTT broker using protocol version 3.1.1.
-- Message QoS level is assumed to be at least QoS 1 (at-least-once) to prevent silent data loss during transient disconnects.
+- Message QoS level is assumed to be at least QoS 1 (at-least-once) to prevent silent data loss during transient disconnects. Duplicate deliveries are therefore possible and are intentionally not deduplicated by the bridge.
 - The bridge does not need to handle the `/set` topic direction (desired state write-back) — that is handled by the REST API PUT endpoint.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: A sensor value published to an MQTT attribute topic appears in InfluxDB within 2 seconds under normal operating conditions.
+- **SC-001**: A sensor value published to an MQTT attribute topic appears in InfluxDB within 2 seconds under normal operating conditions, measured from the instant the publisher receives a successful MQTT publish acknowledgment to the instant the record becomes queryable from InfluxDB.
 - **SC-002**: After an MQTT broker outage of up to 60 seconds, the bridge reconnects automatically and resumes ingestion within 10 seconds of the broker becoming available — with zero operator intervention.
-- **SC-003**: The bridge sustains ingestion of at least 500 attribute messages per second from multiple concurrent devices without measurable data loss.
+- **SC-003**: The bridge sustains ingestion of at least 500 attribute messages per second from multiple concurrent devices for a continuous 60-second healthy-dependency load test with 0 dropped messages and 0 discard/eviction warning logs.
 - **SC-004**: Zero data is silently dropped — every discarded message (malformed topic, unparseable payload, persistent write failure) appears as a log warning that is observable.
 - **SC-005**: All stored records in InfluxDB are correctly tagged with the full device identity hierarchy, enabling account-level access control enforcement at the query layer with 100% accuracy.
 

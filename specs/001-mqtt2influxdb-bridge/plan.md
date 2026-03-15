@@ -5,11 +5,10 @@
 
 ## Summary
 
-Background goroutine embedded in `stutzthings-server` that subscribes to all MQTT topics via wildcard (`#`), parses 5-segment device attribute topics, decodes scalar or JSON payloads, and writes typed measurements to InfluxDB v3 in batches. Implements MQTT 3.1.1 with `github.com/eclipse/paho.mqtt.golang`, username/password auth, exponential-backoff reconnect, FIFO-evicting in-memory buffer, and startup readiness gate against InfluxDB.
+Background goroutine embedded in `stutzthings-server` that subscribes to all MQTT topics via wildcard (`#`), parses 5-segment device attribute topics, decodes scalar or JSON payloads, and writes typed measurements to InfluxDB v3 in batches. Implements MQTT 3.1.1 with `github.com/eclipse/paho.mqtt.golang`, username/password auth, exponential-backoff reconnect, FIFO-evicting in-memory buffer, startup readiness gate against InfluxDB, bounded shutdown flush behavior, structured logging, and health-state reporting to the host service `/health` endpoint.
 
 ## Technical Context
 
-**Language/Version**: Go 1.22+  
 **Language/Version**: Go 1.22+  
 **Primary Dependencies**: `github.com/eclipse/paho.mqtt.golang` (v1.5.1+, MQTT 3.1.1 client with auto-reconnect), `github.com/InfluxCommunity/influxdb3-go/v2/influxdb3` (v2.13.0+, InfluxDB v3 client), `github.com/cenkalti/backoff/v4` (exponential backoff), `github.com/testcontainers/testcontainers-go` (integration tests)  
 **Storage**: InfluxDB v3 (external, plain HTTP, API token auth)  
@@ -17,7 +16,7 @@ Background goroutine embedded in `stutzthings-server` that subscribes to all MQT
 **Target Platform**: Linux server (Raspberry Pi + cloud, deployed via Docker Compose)  
 **Project Type**: background daemon component embedded in a server process  
 **Performance Goals**: ≥500 msg/s sustained ingestion (SC-003); end-to-end latency < 2s (SC-001)  
-**Constraints**: 100ms default flush interval; 10,000-message buffer ceiling (FIFO eviction); 3 retry attempts with exponential backoff; <400 lines per source file (Constitution IV)  
+**Constraints**: 100ms default flush interval; 10,000-message buffer ceiling (FIFO eviction); 3 retry attempts with exponential backoff; 5-second shutdown flush window; <32 MiB bridge-owned buffer memory at default settings with payloads up to 1 KiB; <400 lines per source file (Constitution IV)  
 **Scale/Scope**: Single-process goroutine; multi-tenant (multiple account_ids); no horizontal scaling in this iteration
 
 ## Constitution Check
@@ -67,6 +66,31 @@ stutzthings/stutzthings-server/
 ```
 
 **Structure Decision**: Single-project layout within `stutzthings/stutzthings-server/`. The `bridge/` package is self-contained with its own source files capped at 400 lines each (Constitution IV). Go test files are colocated beside the source files they cover, following agentkit-edr-002. No new top-level application folder is needed (Constitution II). Integration tests use testcontainers-go to spin up real broker and InfluxDB instances.
+
+## Lifecycle, Health, and Observability
+
+### Startup and steady-state
+
+1. Load and validate environment configuration before any network connection attempt.
+2. Probe InfluxDB with exponential backoff until reachable.
+3. Start buffer and writer goroutines.
+4. Connect MQTT and subscribe via `OnConnect` once the broker is reachable.
+5. Report bridge health to the host service `/health` endpoint as `OK`, `WARNING`, or `ERROR` based on MQTT connectivity, InfluxDB reachability, and buffer pressure.
+
+### Shutdown
+
+1. Stop accepting new MQTT messages.
+2. Allow the buffer and writer pipeline up to 5 seconds to flush remaining messages.
+3. Discard any remaining buffered messages after the deadline and emit a structured warning including the dropped count.
+4. Return control to the host process without blocking indefinitely on dependency failure.
+
+### Logging and health model
+
+- Bridge logs are structured and include `component=bridge` plus an `event` field.
+- Discard warnings include `reason` and `topic`; payload parse failures also include a bounded `payload_sample`.
+- Retry logs include `attempt`, `max_retries`, and the dependency being retried.
+- Eviction logs include `dropped_count` and the oldest dropped timestamp.
+- Health reporting follows [agentkit-edr-011](../../.xdrs/agentkit/edrs/observability/011-service-health-check-endpoint.md): the host service exposes `GET /health`, and the bridge contributes dependency-aware status without performing write side effects.
 
 ## Complexity Tracking
 
