@@ -24,7 +24,7 @@
 
 ## Requirement Consistency
 
-- [ ] CHK011 - Does the plan summary still reference "MQTT v5 (baseline features only)" when the spec and all other artifacts have been updated to MQTT 3.1.1? [Conflict, plan.md §Summary]
+- [ ] CHK011 - Does the plan summary consistently reference MQTT 3.1.1 with `github.com/eclipse/paho.mqtt.golang`, matching the spec, research, and XDRs? [Consistency, plan.md §Summary]
 - [ ] CHK012 - Are the data-model.md discard conditions consistent with spec FR-008/FR-009 — specifically, is "empty or null payload" a separate discard condition from "JSON missing `value` field"? [Consistency, data-model.md §Discard conditions, Spec §FR-009]
 - [ ] CHK013 - Is the `MaxBufferSize ≥ BatchSize` validation rule in data-model.md consistent with FR-013 and FR-015 — could a batch size larger than the buffer size create an unresolvable eviction loop? [Consistency, data-model.md §BridgeConfig, Spec §FR-013, FR-015]
 - [ ] CHK014 - Are the two "Language/Version" lines in plan.md a duplicate (copy-paste artifact)? [Consistency, plan.md §Technical Context]

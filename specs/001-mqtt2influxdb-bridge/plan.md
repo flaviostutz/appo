@@ -5,7 +5,7 @@
 
 ## Summary
 
-Background goroutine embedded in `stutzthings-server` that subscribes to all MQTT topics via wildcard (`#`), parses 5-segment device attribute topics, decodes scalar or JSON payloads, and writes typed measurements to InfluxDB v3 in batches. Implements MQTT v5 (baseline features only), username/password auth, exponential-backoff reconnect, FIFO-evicting in-memory buffer, and startup readiness gate against InfluxDB.
+Background goroutine embedded in `stutzthings-server` that subscribes to all MQTT topics via wildcard (`#`), parses 5-segment device attribute topics, decodes scalar or JSON payloads, and writes typed measurements to InfluxDB v3 in batches. Implements MQTT 3.1.1 with `github.com/eclipse/paho.mqtt.golang`, username/password auth, exponential-backoff reconnect, FIFO-evicting in-memory buffer, and startup readiness gate against InfluxDB.
 
 ## Technical Context
 
@@ -56,20 +56,17 @@ stutzthings/stutzthings-server/
 ├── bridge/
 │   ├── bridge.go       # Bridge type: Start(ctx), Stop() — public API surface
 │   ├── config.go       # BridgeConfig, env var loading and validation
-│   ├── mqtt.go         # autopaho connection manager, message dispatch goroutine
+│   ├── mqtt.go         # paho.mqtt.golang client setup, reconnect, and message dispatch
 │   ├── payload.go      # Topic validation, scalar/JSON payload parsing
+│   ├── payload_test.go # Unit tests for payload parsing and topic validation
 │   ├── buffer.go       # In-memory FIFO ring buffer with configurable ceiling
+│   ├── buffer_test.go  # Unit tests for ring buffer eviction and flush triggers
 │   └── influx.go       # InfluxDB v3 batch writer, retry loop, startup probe
-├── bridge_test/
-│   ├── unit/
-│   │   ├── payload_test.go     # Unit tests for parsing logic
-│   │   └── buffer_test.go      # Unit tests for ring buffer eviction
-│   └── integration/
-│       └── bridge_integration_test.go  # End-to-end: real MQTT broker + InfluxDB (testcontainers)
+│   └── bridge_integration_test.go # End-to-end: real MQTT broker + InfluxDB (testcontainers)
 └── Makefile            # Targets: all, build, lint, test
 ```
 
-**Structure Decision**: Single-project layout within `stutzthings/stutzthings-server/`. The `bridge/` package is self-contained with its own source files capped at 400 lines each (Constitution IV). No new top-level application folder is needed (Constitution II). Integration tests use testcontainers-go to spin up real broker and InfluxDB instances.
+**Structure Decision**: Single-project layout within `stutzthings/stutzthings-server/`. The `bridge/` package is self-contained with its own source files capped at 400 lines each (Constitution IV). Go test files are colocated beside the source files they cover, following agentkit-edr-002. No new top-level application folder is needed (Constitution II). Integration tests use testcontainers-go to spin up real broker and InfluxDB instances.
 
 ## Complexity Tracking
 
@@ -98,4 +95,4 @@ No complexity violations. All decisions align with constitution baselines:
 | BDR | `.xdrs/_local/bdrs/product/001-mqtt-topic-structure.md` | Updated `ts` field name (ms epoch) and payload timestamp format | updated |
 | BDR | `.xdrs/_local/bdrs/product/002-influxdb-device-attributes-data-model.md` | Measurement `device_attributes`, 5-tag identity, 3 typed fields, ms timestamp | created |
 | ADR | `.xdrs/_local/adrs/architecture/001-bridge-process-topology.md` | In-process goroutines in `bridge/` package; goroutine-per-concern with channels | created |
-| EDR | `.xdrs/_local/edrs/patterns/001-bridge-reconnect-retry-policy.md` | autopaho reconnect, exponential backoff probe, fixed-interval write retry, FIFO eviction | created |
+| EDR | `.xdrs/_local/edrs/patterns/001-bridge-reconnect-retry-policy.md` | paho.mqtt.golang reconnect with `OnConnect` re-subscription, exponential backoff probe, fixed-interval write retry, FIFO eviction | created |
