@@ -1,0 +1,38 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: stutzthings-mosquitto
+    environment:
+      MQTT_USERNAME: test
+      MQTT_PASSWORD: test
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        cat >/mosquitto/config/mosquitto.conf <<'EOF'
+        listener 1883
+        allow_anonymous false
+        password_file /mosquitto/config/passwd
+        persistence false
+        EOF
+        mosquitto_passwd -b -c /mosquitto/config/passwd "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+
+  influxdb:
+    image: influxdb:3-core
+    container_name: stutzthings-influxdb3
+    command:
+      - influxdb3
+      - serve
+      - --node-id=node0
+      - --object-store=file
+      - --data-dir=/var/lib/influxdb3/data
+      - --http-bind=0.0.0.0:8086
+      - --admin-token-file=/run/secrets/admin-token
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb3-data:/var/lib/influxdb3/data
+      - ./.docker/influxdb/admin-token.json:/run/secrets/admin-token:ro

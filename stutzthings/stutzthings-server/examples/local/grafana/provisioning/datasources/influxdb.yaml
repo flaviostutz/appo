@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB Local
+    uid: influxdb-local
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    editable: false
+    jsonData:
+      version: SQL
+      dbName: iot
+      httpMode: POST
+      insecureGrpc: false
+    secureJsonData:
+      token: apiv3_dev_token_local_only

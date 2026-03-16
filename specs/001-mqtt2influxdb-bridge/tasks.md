@@ -17,10 +17,10 @@
 
 **Purpose**: Create the Go module, local development scaffolding, and quality tooling required by the bridge package.
 
-- [ ] T001 Initialize the Go module and add bridge dependencies in `stutzthings/stutzthings-server/go.mod`
-- [ ] T002 Create build, test, lint, and local-run targets in `stutzthings/stutzthings-server/Makefile`
-- [ ] T003 [P] Add zero-warning GolangCI-Lint configuration in `stutzthings/stutzthings-server/.golangci.yml`
-- [ ] T004 [P] Create local MQTT and InfluxDB development stack in `stutzthings/stutzthings-server/docker-compose.yml`
+- [X] T001 Initialize the Go module and add bridge dependencies in `stutzthings/stutzthings-server/go.mod`
+- [X] T002 Create build, test, lint, and local-run targets in `stutzthings/stutzthings-server/Makefile`
+- [X] T003 [P] Add zero-warning GolangCI-Lint configuration in `stutzthings/stutzthings-server/.golangci.yml`
+- [X] T004 [P] Create local MQTT and InfluxDB development stack in `stutzthings/stutzthings-server/docker-compose.yml`
 
 **Checkpoint**: The server module can install dependencies, run lint/test commands, and boot local infrastructure.
 
@@ -32,10 +32,10 @@
 
 **⚠️ CRITICAL**: No user story work should start until this phase is complete.
 
-- [ ] T005 Implement environment-backed bridge configuration loading and validation in `stutzthings/stutzthings-server/bridge/config.go`
-- [ ] T006 [P] Define the bridge lifecycle, channels, and goroutine orchestration API in `stutzthings/stutzthings-server/bridge/bridge.go`
-- [ ] T007 [P] Create MQTT client construction with MQTT 3.1.1 auth and optional TLS settings in `stutzthings/stutzthings-server/bridge/mqtt.go`
-- [ ] T008 [P] Create InfluxDB client construction and writer scaffolding in `stutzthings/stutzthings-server/bridge/influx.go`
+- [X] T005 Implement environment-backed bridge configuration loading and validation in `stutzthings/stutzthings-server/bridge/config.go`
+- [X] T006 [P] Define the bridge lifecycle, channels, and goroutine orchestration API in `stutzthings/stutzthings-server/bridge/bridge.go`
+- [X] T007 [P] Create MQTT client construction with MQTT 3.1.1 auth and optional TLS settings in `stutzthings/stutzthings-server/bridge/mqtt.go`
+- [X] T008 [P] Create InfluxDB client construction and writer scaffolding in `stutzthings/stutzthings-server/bridge/influx.go`
 
 **Checkpoint**: Shared configuration, bridge lifecycle, MQTT client setup, and InfluxDB client setup are in place for story work.
 
@@ -49,16 +49,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Add topic validation and payload parsing unit tests in `stutzthings/stutzthings-server/bridge/payload_test.go`
-- [ ] T010 [P] [US1] Add end-to-end ingestion integration coverage for numeric, string, boolean, and JSON payloads in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
+- [X] T009 [P] [US1] Add topic validation and payload parsing unit tests in `stutzthings/stutzthings-server/bridge/payload_test.go`
+- [X] T010 [P] [US1] Add end-to-end ingestion integration coverage for numeric, string, boolean, and JSON payloads in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement topic parsing and scalar-or-JSON payload decoding in `stutzthings/stutzthings-server/bridge/payload.go`
-- [ ] T012 [US1] Implement batch accumulation and flush interval handling in `stutzthings/stutzthings-server/bridge/buffer.go`
-- [ ] T013 [US1] Implement InfluxDB point mapping and batch write execution for `device_attributes` in `stutzthings/stutzthings-server/bridge/influx.go`
-- [ ] T014 [US1] Connect MQTT message dispatch to the internal ingest channel in `stutzthings/stutzthings-server/bridge/mqtt.go`
-- [ ] T015 [US1] Wire the bridge start flow so valid MQTT messages reach the buffer and writer goroutines in `stutzthings/stutzthings-server/bridge/bridge.go`
+- [X] T011 [US1] Implement topic parsing and scalar-or-JSON payload decoding in `stutzthings/stutzthings-server/bridge/payload.go`
+- [X] T012 [US1] Implement batch accumulation and flush interval handling in `stutzthings/stutzthings-server/bridge/buffer.go`
+- [X] T013 [US1] Implement InfluxDB point mapping and batch write execution for `device_attributes` in `stutzthings/stutzthings-server/bridge/influx.go`
+- [X] T014 [US1] Connect MQTT message dispatch to the internal ingest channel in `stutzthings/stutzthings-server/bridge/mqtt.go`
+- [X] T015 [US1] Wire the bridge start flow so valid MQTT messages reach the buffer and writer goroutines in `stutzthings/stutzthings-server/bridge/bridge.go`
 
 **Checkpoint**: User Story 1 is independently functional and can persist valid device attributes to InfluxDB.
 
@@ -72,15 +72,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T016 [P] [US2] Add unit coverage for buffer overflow eviction and flush triggers in `stutzthings/stutzthings-server/bridge/buffer_test.go`
-- [ ] T017 [P] [US2] Extend resilience integration coverage for MQTT reconnect and InfluxDB retry behavior in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
+- [X] T016 [P] [US2] Add unit coverage for buffer overflow eviction and flush triggers in `stutzthings/stutzthings-server/bridge/buffer_test.go`
+- [X] T017 [P] [US2] Extend resilience integration coverage for MQTT reconnect and InfluxDB retry behavior in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Implement FIFO ring-buffer eviction with warning logs in `stutzthings/stutzthings-server/bridge/buffer.go`
-- [ ] T019 [US2] Implement startup readiness probing and bounded write retries in `stutzthings/stutzthings-server/bridge/influx.go`
-- [ ] T020 [US2] Implement MQTT auto-reconnect, `OnConnect` wildcard re-subscription, and reconnect logging in `stutzthings/stutzthings-server/bridge/mqtt.go`
-- [ ] T021 [US2] Implement coordinated shutdown and goroutine stop handling in `stutzthings/stutzthings-server/bridge/bridge.go`
+- [X] T018 [US2] Implement FIFO ring-buffer eviction with warning logs in `stutzthings/stutzthings-server/bridge/buffer.go`
+- [X] T019 [US2] Implement startup readiness probing and bounded write retries in `stutzthings/stutzthings-server/bridge/influx.go`
+- [X] T020 [US2] Implement MQTT auto-reconnect, `OnConnect` wildcard re-subscription, and reconnect logging in `stutzthings/stutzthings-server/bridge/mqtt.go`
+- [X] T021 [US2] Implement coordinated shutdown and goroutine stop handling in `stutzthings/stutzthings-server/bridge/bridge.go`
 
 **Checkpoint**: User Story 2 is independently functional and the bridge survives transient broker or InfluxDB outages without manual intervention.
 
@@ -94,13 +94,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T022 [P] [US3] Extend integration coverage for multi-account and multi-attribute tagging in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
+- [X] T022 [P] [US3] Extend integration coverage for multi-account and multi-attribute tagging in `stutzthings/stutzthings-server/bridge/bridge_integration_test.go`
 
 ### Implementation for User Story 3
 
-- [ ] T023 [US3] Enforce full 5-segment identity extraction and invalid-topic rejection paths in `stutzthings/stutzthings-server/bridge/payload.go`
-- [ ] T024 [US3] Ensure all InfluxDB writes include the complete account, device, instance, node, and attribute tag set in `stutzthings/stutzthings-server/bridge/influx.go`
-- [ ] T025 [US3] Preserve per-message identity isolation through the ingest pipeline under concurrent load in `stutzthings/stutzthings-server/bridge/bridge.go`
+- [X] T023 [US3] Enforce full 5-segment identity extraction and invalid-topic rejection paths in `stutzthings/stutzthings-server/bridge/payload.go`
+- [X] T024 [US3] Ensure all InfluxDB writes include the complete account, device, instance, node, and attribute tag set in `stutzthings/stutzthings-server/bridge/influx.go`
+- [X] T025 [US3] Preserve per-message identity isolation through the ingest pipeline under concurrent load in `stutzthings/stutzthings-server/bridge/bridge.go`
 
 **Checkpoint**: User Story 3 is independently functional and records remain isolated by full device identity across accounts and devices.
 
@@ -110,9 +110,9 @@
 
 **Purpose**: Finish documentation, developer ergonomics, and feature verification that spans all stories.
 
-- [ ] T026 [P] Document local setup, environment variables, and bridge usage in `stutzthings/stutzthings-server/README.md`
-- [ ] T027 Update quickstart commands and verification steps to match the final implementation in `specs/001-mqtt2influxdb-bridge/quickstart.md`
-- [ ] T028 Run and stabilize the full lint and test workflow in `stutzthings/stutzthings-server/Makefile`
+- [X] T026 [P] Document local setup, environment variables, and bridge usage in `stutzthings/stutzthings-server/README.md`
+- [X] T027 Update quickstart commands and verification steps to match the final implementation in `specs/001-mqtt2influxdb-bridge/quickstart.md`
+- [X] T028 Run and stabilize the full lint and test workflow in `stutzthings/stutzthings-server/Makefile`
 
 ---
 

@@ -4,7 +4,7 @@ Run the bridge locally for development and testing in under 5 minutes.
 
 ## Prerequisites
 
-- Go 1.22+ installed (`go version`)
+- Go 1.25+ installed (`go version`)
 - Docker and Docker Compose installed
 - `make` available
 - An InfluxDB v3 database already created for the bridge (the bridge does not provision databases or tables)
@@ -18,9 +18,15 @@ docker compose up -d
 
 This starts:
 - **Mosquitto** MQTT broker on `localhost:1883` (username: `test`, password: `test`)
-- **InfluxDB v3** on `localhost:8086` (token: `dev-token`, database: `iot`)
+- **InfluxDB v3** on `localhost:8086` (token: `apiv3_dev_token_local_only`, database: `iot`)
 
 Before running the bridge, ensure the target InfluxDB database exists. In the local example above, the expected database name is `iot`.
+
+Create it with:
+
+```bash
+docker exec stutzthings-influxdb3 sh -lc 'export INFLUXDB3_AUTH_TOKEN=apiv3_dev_token_local_only && influxdb3 create database iot'
+```
 
 ## 2. Set environment variables
 
@@ -29,7 +35,7 @@ export MQTT_BROKER_URL=mqtt://localhost:1883
 export MQTT_USERNAME=test
 export MQTT_PASSWORD=test
 export INFLUXDB_URL=http://localhost:8086
-export INFLUXDB_TOKEN=dev-token
+export INFLUXDB_TOKEN=apiv3_dev_token_local_only
 export INFLUXDB_DATABASE=iot
 ```
 
@@ -46,7 +52,7 @@ export BRIDGE_MAX_WRITE_RETRIES=3
 
 ```bash
 make build
-./stutzthings-server
+./dist/stutzthings-server
 ```
 
 The server starts and the bridge goroutine logs:
@@ -57,6 +63,12 @@ INFO  bridge: connected to mqtt://localhost:1883
 ```
 
 The host service health endpoint should report bridge state derived from MQTT connectivity, InfluxDB reachability, and buffer pressure. The bridge does not expose a standalone port; it contributes status to the server's `GET /health` response.
+
+Verify it with:
+
+```bash
+curl -i http://localhost:8080/health
+```
 
 ## 4. Publish a test message
 
@@ -88,7 +100,7 @@ Query via the InfluxDB UI at `http://localhost:8086` or via curl:
 
 ```bash
 curl -s "http://localhost:8086/query" \
-  -H "Authorization: Token dev-token" \
+  -H "Authorization: Bearer apiv3_dev_token_local_only" \
   -H "Content-Type: application/json" \
   -d '{"query": "SELECT * FROM device_attributes WHERE time > now() - 1m", "database": "iot"}'
 ```
@@ -102,6 +114,7 @@ make test
 ```
 
 Integration tests spin up their own broker and InfluxDB containers via testcontainers-go and tear them down automatically. Unit tests run without any infrastructure.
+If Docker is not available to the test process, the integration suite skips cleanly.
 
 ## Resilience testing
 

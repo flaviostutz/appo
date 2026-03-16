@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: stutzthings-local
+    orgId: 1
+    folder: Stutzthings Local
+    type: file
+    disableDeletion: true
+    editable: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

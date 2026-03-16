@@ -1,0 +1,5 @@
+{
+  "token": "apiv3_dev_token_local_only",
+  "name": "admin",
+  "description": "Local example token for stutzthings-server"
+}

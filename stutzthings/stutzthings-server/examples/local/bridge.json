@@ -1,0 +1,13 @@
+{
+  "mqttBrokerUrl": "mqtt://127.0.0.1:1883",
+  "mqttUsername": "test",
+  "mqttPassword": "test",
+  "mqttTlsEnabled": false,
+  "influxDbUrl": "http://127.0.0.1:8086",
+  "influxDbToken": "apiv3_dev_token_local_only",
+  "influxDbDatabase": "iot",
+  "batchSize": 100,
+  "flushIntervalMs": 100,
+  "maxBufferSize": 10000,
+  "maxWriteRetries": 3
+}
