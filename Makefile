@@ -1,5 +1,7 @@
 # Root Makefile — delegates targets to each module.
 # Module directories — add entries here as new modules are created.
+.DEFAULT_GOAL := all
+
 MODULES := \
 	appo \
 	stutzthings \
@@ -7,9 +9,11 @@ MODULES := \
 	devices \
 	deployments
 
-.PHONY: build lint test lint-fix setup $(MODULES)
+.PHONY: all build lint test lint-fix setup $(MODULES)
 
 ## Aggregate targets
+
+all: build lint test
 
 build:
 	@for dir in $(MODULES); do \

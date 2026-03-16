@@ -6,11 +6,20 @@ GOFLAGS ?=
 MISE ?= mise
 GO := $(MISE) exec -- go
 GOLANGCI_LINT := $(MISE) exec -- golangci-lint
+GOFMT := $(MISE) exec -- gofmt
+VULN_FAIL_LEVEL ?= critical
+GO_SOURCE_FILES = $(shell find . -type f -name '*.go' -not -path './dist/*' | sort)
+GO_TEST_PACKAGES = $(shell $(GO) list -f '{{if or (gt (len .TestGoFiles) 0) (gt (len .XTestGoFiles) 0)}}{{.ImportPath}}{{end}}' ./... | sed '/^$$/d')
+GO_INTEGRATION_TEST_PACKAGES = $(shell $(GO) list -tags=integration -f '{{if or (gt (len .TestGoFiles) 0) (gt (len .XTestGoFiles) 0)}}{{.ImportPath}}{{end}}' ./... | sed '/^$$/d')
+UNIT_COVERAGE_THRESHOLD ?= 80
 DOCKER ?= docker
 DOCKER_COMPOSE := $(DOCKER) compose
 RUN_IMAGES := eclipse-mosquitto:2 influxdb:3-core
+HTTP_ADDR ?= :8080
+HEALTH_URL ?=
+RUN_SERVER := env HTTP_ADDR=$(HTTP_ADDR) $(GO) run .
 
-.PHONY: all check-mise check-docker check-run-images install build lint lint-fix test test-unit test-integration coverage clean start run
+.PHONY: all check-mise check-docker check-run-images install build lint lint-fix lint-format lint-style lint-audit lint-vuln test test-unit test-integration coverage clean start run health
 
 all: build lint test
 
@@ -42,40 +51,68 @@ build: install
 	mkdir -p $(DIST_DIR)
 	$(GO) build $(GOFLAGS) -o $(DIST_DIR)/$(BINARY) .
 
-lint: check-mise
+lint: check-mise lint-format
 	$(GOLANGCI_LINT) run ./...
+	$(GO) run ./cli/vulnaudit --fail-level $(VULN_FAIL_LEVEL) ./...
+
+	@files="$(GO_SOURCE_FILES)"; \
+	if [ -z "$$files" ]; then exit 0; fi; \
+	output="$$($(GOFMT) -l $$files)"; \
+	if [ -n "$$output" ]; then \
+		echo "gofmt found unformatted files:"; \
+		echo "$$output"; \
+		exit 1; \
+	fi
 
 lint-fix: check-mise
+	files="$(GO_SOURCE_FILES)"; \
+	if [ -n "$$files" ]; then $(GOFMT) -w $$files; fi
 	$(GOLANGCI_LINT) run --fix ./...
 
-test: test-unit test-integration
-
-test-unit: check-mise
-	$(GO) test ./...
-	@packages="$$($(GO) list -f '{{if or (gt (len .TestGoFiles) 0) (gt (len .XTestGoFiles) 0)}}{{.ImportPath}}{{end}}' ./... | sed '/^$$/d')"; \
-	if [ -n "$$packages" ]; then $(GO) test -cover $$packages; fi
-
-test-integration: check-mise
-	@packages="$$($(GO) list -tags=integration -f '{{if or (gt (len .TestGoFiles) 0) (gt (len .XTestGoFiles) 0)}}{{.ImportPath}}{{end}}' ./... | sed '/^$$/d')"; \
-	if [ -n "$$packages" ]; then $(GO) test -cover -tags=integration $$packages; fi
-
-coverage: check-mise
-	$(GO) test ./...
-	@packages="$$($(GO) list -f '{{if or (gt (len .TestGoFiles) 0) (gt (len .XTestGoFiles) 0)}}{{.ImportPath}}{{end}}' ./... | sed '/^$$/d')"; \
+test:
+	# Run unit tests
+	@packages="$(GO_TEST_PACKAGES)"; \
 	if [ -n "$$packages" ]; then \
-		$(GO) test -coverprofile=coverage.out $$packages; \
-		$(GO) tool cover -func=coverage.out; \
+		$(GO) test -coverprofile=coverage.out $$packages >/dev/null 2>&1; \
 	else \
+		echo "no unit test packages found"; \
 		rm -f coverage.out; \
 	fi
+
+	# Enforce unit test coverage threshold
+	@total_cov="$$($(GO) tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/, "", $$3); print $$3}')"; \
+	if [ -z "$$total_cov" ]; then \
+		echo "failed to determine unit test coverage"; \
+		exit 1; \
+	fi; \
+	if awk -v cov="$$total_cov" -v threshold="$(UNIT_COVERAGE_THRESHOLD)" 'BEGIN { exit !(cov + 0 < threshold + 0) }'; then \
+		$(GO) tool cover -func=coverage.out; \
+		awk -v cov="$$total_cov" -v threshold="$(UNIT_COVERAGE_THRESHOLD)" 'BEGIN { printf "unit test coverage %.1f%% is below threshold %.1f%%\n", cov + 0, threshold + 0; exit 1 }'; \
+	fi
+
+	# Run integration tests (if any)
+	@packages="$(GO_INTEGRATION_TEST_PACKAGES)"; \
+	if [ -n "$$packages" ]; then $(GO) test -tags=integration $$packages; fi
 
 clean:
 	rm -rf $(DIST_DIR) coverage.out
 
-start: check-mise
-	$(GO) run .
-
 run: check-mise check-run-images
 	$(DOCKER_COMPOSE) up -d
-	$(GO) run .
+	$(RUN_SERVER)
+
+health:
+	@command -v curl >/dev/null 2>&1 || { echo "curl is required for 'make health'."; exit 1; }
+	@addr="$(HTTP_ADDR)"; \
+	url="$(HEALTH_URL)"; \
+	if [ -z "$$url" ]; then \
+		case "$$addr" in \
+			http://*|https://*) url="$$addr" ;; \
+			:*) url="http://127.0.0.1$$addr" ;; \
+			*) url="http://$$addr" ;; \
+		esac; \
+		url="$$url/health"; \
+	fi; \
+	echo "checking $$url"; \
+	curl --silent --show-error --fail "$$url"
 

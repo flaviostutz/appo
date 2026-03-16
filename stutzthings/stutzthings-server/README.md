@@ -82,8 +82,11 @@ Optional variables:
 ## Commands
 
 - `make build` builds the binary into `dist/`
-- `make lint` runs zero-warning GolangCI-Lint checks
-- `make test` runs unit and integration tests
+- `make lint` validates `gofmt`, runs zero-warning GolangCI-Lint checks, and executes the vulnerability audit using `VULN_FAIL_LEVEL` (default: `critical`)
+- `make lint-style` runs GolangCI-Lint only, and `make lint-audit` runs the vulnerability audit only
+- `make test` runs unit and integration tests, then enforces the unit coverage threshold and prints the coverage report only when the threshold fails
+- `make coverage` generates the unit coverage report without enforcing the threshold
+- `make health` checks `GET /health` on the locally running server
 - `make run` verifies Docker access, starts the local Docker stack, and runs the server
 
 ## Local Example Stack
