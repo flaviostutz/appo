@@ -7,3 +7,4 @@ Project-local engineering decisions for this repository. These decisions overrid
 | ID | Title | File |
 |----|-------|------|
 | _local-edr-001 | MQTT Reconnect and InfluxDB Retry Policy | [patterns/001-bridge-reconnect-retry-policy.md](patterns/001-bridge-reconnect-retry-policy.md) |
+| _local-edr-002 | Local Device Operations Development Workflow | [patterns/002-local-device-operations-development-workflow.md](patterns/002-local-device-operations-development-workflow.md) |

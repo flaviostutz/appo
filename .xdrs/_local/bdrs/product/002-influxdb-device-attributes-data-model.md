@@ -73,4 +73,6 @@ whichever occurs first.
 
 - Feature spec: [specs/001-mqtt2influxdb-bridge/spec.md](../../../../specs/001-mqtt2influxdb-bridge/spec.md)
 - Feature plan: [specs/001-mqtt2influxdb-bridge/plan.md](../../../../specs/001-mqtt2influxdb-bridge/plan.md)
+- Feature spec: [specs/002-device-ops-api/spec.md](../../../../specs/002-device-ops-api/spec.md)
+- Feature plan: [specs/002-device-ops-api/plan.md](../../../../specs/002-device-ops-api/plan.md)
 - Related: [bdrs/product/001-mqtt-topic-structure.md](001-mqtt-topic-structure.md)
