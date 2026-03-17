@@ -17,9 +17,13 @@ DOCKER_COMPOSE := $(DOCKER) compose
 RUN_IMAGES := eclipse-mosquitto:2 influxdb:3-core
 HTTP_ADDR ?= :8080
 HEALTH_URL ?=
-RUN_SERVER := env HTTP_ADDR=$(HTTP_ADDR) $(GO) run .
+JWT_SIGNING_SECRET_BASE64 ?= ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl
+JWT_ISSUER ?= stutzthings-server-dev
+JWT_TOKEN_TTL ?= 24h
+MOSQUITTO_JWT_AUTH_SO ?=
+RUN_SERVER := env HTTP_ADDR=$(HTTP_ADDR) JWT_SIGNING_SECRET_BASE64=$(JWT_SIGNING_SECRET_BASE64) JWT_ISSUER=$(JWT_ISSUER) JWT_TOKEN_TTL=$(JWT_TOKEN_TTL) $(GO) run .
 
-.PHONY: all check-mise check-docker check-run-images install build lint lint-fix lint-format lint-style lint-audit lint-vuln test test-unit test-integration coverage clean start run health
+.PHONY: all check-mise check-docker check-run-images check-mosquitto-plugin install build lint lint-fix lint-format lint-style lint-audit lint-vuln test test-unit test-integration coverage clean start run health
 
 all: build lint test
 
@@ -42,6 +46,17 @@ check-run-images: check-docker
 			fi; \
 		fi; \
 	done
+
+check-mosquitto-plugin:
+	@if [ -z "$(MOSQUITTO_JWT_AUTH_SO)" ]; then \
+		echo "MOSQUITTO_JWT_AUTH_SO must point to libmosquitto_jwt_auth.so for 'make run'."; \
+		echo "Build or download the plugin, export MOSQUITTO_JWT_AUTH_SO, then retry."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(MOSQUITTO_JWT_AUTH_SO)" ]; then \
+		echo "MOSQUITTO_JWT_AUTH_SO does not exist: $(MOSQUITTO_JWT_AUTH_SO)"; \
+		exit 1; \
+	fi
 
 install: check-mise
 	$(MISE) install
@@ -97,7 +112,8 @@ test:
 clean:
 	rm -rf $(DIST_DIR) coverage.out
 
-run: check-mise check-run-images
+
+run: check-mise check-run-images check-mosquitto-plugin
 	$(DOCKER_COMPOSE) up -d
 	$(RUN_SERVER)
 

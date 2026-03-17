@@ -1,23 +1,26 @@
 # stutzthings-server
 
-Embedded Go server for the MQTT-to-InfluxDB bridge and its health endpoint.
+Embedded Go server for the MQTT-to-InfluxDB bridge plus the device-operations REST and MCP surfaces.
 
 ## Getting Started
 
 ```sh
 make install
-docker compose up -d
+export JWT_SIGNING_SECRET_BASE64="$(printf %s 'dev_jwt_secret_local_only_please_change' | base64)"
+export MOSQUITTO_JWT_AUTH_SO=/absolute/path/to/libmosquitto_jwt_auth.so
 make build
-./dist/stutzthings-server
+make run
 ```
 
-If Docker cannot pull `eclipse-mosquitto:2` or `influxdb:3-core` on your machine, `make run` now stops with a short diagnostic and points to the host-based fallback in `examples/local/`.
+If Docker cannot pull `eclipse-mosquitto:2` or `influxdb:3-core` on your machine, `make run` stops with a short diagnostic and points to the host-based fallback in `examples/local/`.
+
+`make run` now expects the Mosquitto JWT auth plugin shared library path in `MOSQUITTO_JWT_AUTH_SO` and uses the same `JWT_SIGNING_SECRET_BASE64` value for both the Go service and Mosquitto.
 
 ```sh
 curl -i http://localhost:8080/health
 ```
 
-The bridge loads its runtime settings from environment variables and exposes dependency-aware health at `GET /health`.
+The bridge loads its runtime settings from environment variables and exposes dependency-aware health at `GET /health`. The same process is also the planned home for protected REST routes and the `/mcp` endpoint.
 
 By default the bridge loads runtime settings from `bridge.json` in the current working directory. If that file is absent, it falls back to environment variables. Set `BRIDGE_CONFIG_PATH` to load a different JSON file.
 
@@ -78,6 +81,10 @@ Optional variables:
 - `BRIDGE_MAX_WRITE_RETRIES` default `3`
 - `HTTP_ADDR` default `:8080`
 - `LOG_LEVEL` default `info`
+- `JWT_SIGNING_SECRET_BASE64` shared base64-encoded HS256 secret for the Go service and Mosquitto JWT plugin
+- `JWT_ISSUER` token issuer string for registration-issued credentials
+- `JWT_TOKEN_TTL` default registration-token lifetime, default `24h`
+- `MOSQUITTO_JWT_AUTH_SO` absolute path to `libmosquitto_jwt_auth.so` used by `make run`
 
 ## Commands
 
@@ -87,17 +94,17 @@ Optional variables:
 - `make test` runs unit and integration tests, then enforces the unit coverage threshold and prints the coverage report only when the threshold fails
 - `make coverage` generates the unit coverage report without enforcing the threshold
 - `make health` checks `GET /health` on the locally running server
-- `make run` verifies Docker access, starts the local Docker stack, and runs the server
+- `make run` verifies Docker access, requires the Mosquitto JWT plugin path, starts the local Docker stack, and runs the server
 
 ## Local Example Stack
 
-For a local development flow with containerized infrastructure, use `examples/local/README.md`. It includes a dedicated `docker-compose.yml`, `Makefile`, `bridge.json`, an InfluxDB admin token file, and Grafana provisioning for running Mosquitto, InfluxDB, and Grafana in Docker while keeping the Go bridge on the host machine.
+For a local development flow with containerized infrastructure, use `examples/local/README.md`. It includes a dedicated `docker-compose.yml`, `Makefile`, `bridge.json`, an InfluxDB admin token file, Grafana provisioning, and Mosquitto JWT plugin wiring for running Mosquitto, InfluxDB, and Grafana in Docker while keeping the Go bridge on the host machine.
 
 ## Layout
 
-- `main.go` wires the bridge into an HTTP `/health` endpoint
+- `main.go` wires the bridge into the HTTP server that hosts `/health`, REST routes, and MCP
 - `bridge/` contains configuration, MQTT, buffering, payload parsing, and InfluxDB writing
-- `docker-compose.yml` starts a local Mosquitto broker and InfluxDB 3 Core
+- `docker-compose.yml` starts a local Mosquitto broker with `wiomoc/mosquitto-jwt-auth` and InfluxDB 3 Core
 - `examples/local/` contains a compose-managed local stack for Mosquitto, InfluxDB, and Grafana plus a host-run bridge
 
 Before running the bridge against the local InfluxDB instance, create the target database manually, for example:

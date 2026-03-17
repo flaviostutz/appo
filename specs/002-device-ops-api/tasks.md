@@ -11,18 +11,18 @@
 
 **Purpose**: Bring the local XDR set promised by the plan into sync before implementation work begins.
 
-- [ ] T044 Update the local product BDRs for MQTT topic/JWT ACL mapping, observation-query behavior, authorization scope grammar, and stateless registration policy in `.xdrs/_local/bdrs/product/001-mqtt-topic-structure.md`, `.xdrs/_local/bdrs/product/002-influxdb-device-attributes-data-model.md`, `.xdrs/_local/bdrs/product/003-device-authorization-scope-grammar.md`, and `.xdrs/_local/bdrs/product/004-stateless-device-registration-policy.md`
-- [ ] T045 Update the local ADR and EDR for dual-surface operations and the one-command local workflow in `.xdrs/_local/adrs/architecture/002-device-operations-dual-surface-architecture.md` and `.xdrs/_local/edrs/patterns/002-local-device-operations-development-workflow.md`
-- [ ] T046 Update `.xdrs/_local/bdrs/index.md`, `.xdrs/_local/adrs/index.md`, and `.xdrs/_local/edrs/index.md` with any new or revised feature-002 references created during the XDR sync
+- [x] T044 Update the local product BDRs for MQTT topic/JWT ACL mapping, observation-query behavior, authorization scope grammar, and stateless registration policy in `.xdrs/_local/bdrs/product/001-mqtt-topic-structure.md`, `.xdrs/_local/bdrs/product/002-influxdb-device-attributes-data-model.md`, `.xdrs/_local/bdrs/product/003-device-authorization-scope-grammar.md`, and `.xdrs/_local/bdrs/product/004-stateless-device-registration-policy.md`
+- [x] T045 Update the local ADR and EDR for dual-surface operations and the one-command local workflow in `.xdrs/_local/adrs/architecture/002-device-operations-dual-surface-architecture.md` and `.xdrs/_local/edrs/patterns/002-local-device-operations-development-workflow.md`
+- [x] T046 Update `.xdrs/_local/bdrs/index.md`, `.xdrs/_local/adrs/index.md`, and `.xdrs/_local/edrs/index.md` with any new or revised feature-002 references created during the XDR sync
 
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Add the dependencies and local workflow hooks required by the planned implementation.
 
-- [ ] T001 Update dependency declarations for JWT and MCP support in `stutzthings/stutzthings-server/go.mod`
-- [ ] T002 Update the one-command local verification workflow and shared JWT environment bootstrap in `stutzthings/stutzthings-server/Makefile` and `stutzthings/stutzthings-server/docker-compose.yml`
-- [ ] T003 [P] Update the example local Mosquitto JWT plugin bootstrap and username=`sub` enforcement in `stutzthings/stutzthings-server/examples/local/docker-compose.yml` and `stutzthings/stutzthings-server/examples/local/mosquitto/mosquitto.conf`
-- [ ] T004 [P] Document MQTT, REST, MCP, and shared JWT bootstrap requirements in `stutzthings/stutzthings-server/README.md`
+- [x] T001 Update dependency declarations for JWT and MCP support in `stutzthings/stutzthings-server/go.mod`
+- [x] T002 Update the one-command local verification workflow and shared JWT environment bootstrap in `stutzthings/stutzthings-server/Makefile` and `stutzthings/stutzthings-server/docker-compose.yml`
+- [x] T003 [P] Update the example local Mosquitto JWT plugin bootstrap and username=`sub` enforcement in `stutzthings/stutzthings-server/examples/local/docker-compose.yml` and `stutzthings/stutzthings-server/examples/local/mosquitto/mosquitto.conf`
+- [x] T004 [P] Document MQTT, REST, MCP, and shared JWT bootstrap requirements in `stutzthings/stutzthings-server/README.md`
 
 ---
 
@@ -32,19 +32,19 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete.
 
-- [ ] T005 [P] Implement JWT claim validation and signing helpers in `stutzthings/stutzthings-server/auth/jwt.go`
-- [ ] T006 [P] Implement MQTT topic-filter authorization matching for `publ` and `subs` claims in `stutzthings/stutzthings-server/auth/topic_acl.go`
-- [ ] T007 [P] Add JWT claim and topic-filter matcher coverage in `stutzthings/stutzthings-server/auth/jwt_test.go` and `stutzthings/stutzthings-server/auth/topic_acl_test.go`
-- [ ] T008 [P] Define shared device-operation domain models in `stutzthings/stutzthings-server/operations/models.go`
-- [ ] T009 [P] Implement Influx row decoding and reusable query builders in `stutzthings/stutzthings-server/operations/influx_queries.go`
-- [ ] T010 Implement the shared operations service facade for reads, history, desired-state, and registration in `stutzthings/stutzthings-server/operations/service.go`
-- [ ] T011 [P] Implement bearer-token middleware and request auth context extraction in `stutzthings/stutzthings-server/auth/middleware.go`
-- [ ] T012 [P] Implement shared device-identity, registration, and history-range validation used by both REST and MCP in `stutzthings/stutzthings-server/operations/validation.go`
-- [ ] T013 [P] Define shared REST and MCP response DTOs, including registration claim payloads, in `stutzthings/stutzthings-server/api/response_types.go`
+- [x] T005 [P] Implement JWT claim validation and signing helpers in `stutzthings/stutzthings-server/auth/jwt.go`
+- [x] T006 [P] Implement MQTT topic-filter authorization matching for `publ` and `subs` claims in `stutzthings/stutzthings-server/auth/topic_acl.go`
+- [x] T007 [P] Add JWT claim and topic-filter matcher coverage in `stutzthings/stutzthings-server/auth/jwt_test.go` and `stutzthings/stutzthings-server/auth/topic_acl_test.go`
+- [x] T008 [P] Define shared device-operation domain models in `stutzthings/stutzthings-server/operations/models.go`
+- [x] T009 [P] Implement Influx row decoding and reusable query builders in `stutzthings/stutzthings-server/operations/influx_queries.go`
+- [x] T010 Implement the shared operations service facade for reads, history, desired-state, and registration in `stutzthings/stutzthings-server/operations/service.go`
+- [x] T011 [P] Implement bearer-token middleware and request auth context extraction in `stutzthings/stutzthings-server/auth/middleware.go`
+- [x] T012 [P] Implement shared device-identity, registration, and history-range validation used by both REST and MCP in `stutzthings/stutzthings-server/operations/validation.go`
+- [x] T013 [P] Define shared REST and MCP response DTOs, including registration claim payloads, in `stutzthings/stutzthings-server/api/response_types.go`
 - [ ] T047 [P] Add REST/MCP validation-parity coverage for malformed identity paths and invalid history and registration inputs in `stutzthings/stutzthings-server/main_test.go`
 - [ ] T048 [P] Add MQTT broker interoperability coverage proving connections are rejected when username does not equal JWT `sub` in `stutzthings/stutzthings-server/main_test.go`
-- [ ] T014 [P] Create the MCP server bootstrap and tool registration scaffold in `stutzthings/stutzthings-server/mcpapi/server.go`
-- [ ] T015 Update HTTP server bootstrap to mount auth, shared validation, split REST handlers, split MCP tools, and health handlers in `stutzthings/stutzthings-server/main.go`
+- [x] T014 [P] Create the MCP server bootstrap and tool registration scaffold in `stutzthings/stutzthings-server/mcpapi/server.go`
+- [x] T015 Update HTTP server bootstrap to mount auth, shared validation, split REST handlers, split MCP tools, and health handlers in `stutzthings/stutzthings-server/main.go`
 
 **Checkpoint**: Foundation is ready and the user stories can now be implemented against stable auth, shared validation, service, and broker integration interfaces.
 
@@ -58,15 +58,15 @@
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Add latest-state service coverage for attribute and whole-device reads, including empty and partial results, in `stutzthings/stutzthings-server/operations/query_service_test.go`
-- [ ] T017 [P] [US1] Add REST handler coverage for latest-state reads in `stutzthings/stutzthings-server/api/state_handlers_test.go`
-- [ ] T018 [P] [US1] Add MCP parity coverage for latest-state tools in `stutzthings/stutzthings-server/mcpapi/state_tools_test.go`
+- [x] T016 [P] [US1] Add latest-state service coverage for attribute and whole-device reads, including empty and partial results, in `stutzthings/stutzthings-server/operations/query_service_test.go`
+- [x] T017 [P] [US1] Add REST handler coverage for latest-state reads in `stutzthings/stutzthings-server/api/state_handlers_test.go`
+- [x] T018 [P] [US1] Add MCP parity coverage for latest-state tools in `stutzthings/stutzthings-server/mcpapi/state_tools_test.go`
 
 ### Implementation for User Story 1
 
-- [ ] T019 [US1] Implement latest-attribute and whole-device snapshot queries with topic-filter authorization and partial filtering in `stutzthings/stutzthings-server/operations/query_service.go`
-- [ ] T020 [US1] Implement REST handlers for attribute and device snapshot reads in `stutzthings/stutzthings-server/api/state_handlers.go`
-- [ ] T021 [US1] Implement MCP tools for attribute and device snapshot reads in `stutzthings/stutzthings-server/mcpapi/state_tools.go`
+- [x] T019 [US1] Implement latest-attribute and whole-device snapshot queries with topic-filter authorization and partial filtering in `stutzthings/stutzthings-server/operations/query_service.go`
+- [x] T020 [US1] Implement REST handlers for attribute and device snapshot reads in `stutzthings/stutzthings-server/api/state_handlers.go`
+- [x] T021 [US1] Implement MCP tools for attribute and device snapshot reads in `stutzthings/stutzthings-server/mcpapi/state_tools.go`
 
 **Checkpoint**: User Story 1 is functional when authorized clients can read current state through both transports with identical business results.
 
@@ -80,15 +80,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] Add history query coverage for valid, empty, and invalid ranges in `stutzthings/stutzthings-server/operations/history_service_test.go`
-- [ ] T023 [P] [US2] Add REST handler coverage for node and attribute history in `stutzthings/stutzthings-server/api/history_handlers_test.go`
-- [ ] T024 [P] [US2] Add MCP parity coverage for history tools in `stutzthings/stutzthings-server/mcpapi/history_tools_test.go`
+- [x] T022 [P] [US2] Add history query coverage for valid, empty, and invalid ranges in `stutzthings/stutzthings-server/operations/history_service_test.go`
+- [x] T023 [P] [US2] Add REST handler coverage for node and attribute history in `stutzthings/stutzthings-server/api/history_handlers_test.go`
+- [x] T024 [P] [US2] Add MCP parity coverage for history tools in `stutzthings/stutzthings-server/mcpapi/history_tools_test.go`
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Implement ordered node and attribute history queries with explicit range enforcement in `stutzthings/stutzthings-server/operations/query_service.go`
-- [ ] T026 [US2] Implement REST handlers for node and attribute history endpoints in `stutzthings/stutzthings-server/api/history_handlers.go`
-- [ ] T027 [US2] Implement MCP tools for node and attribute history in `stutzthings/stutzthings-server/mcpapi/history_tools.go`
+- [x] T025 [US2] Implement ordered node and attribute history queries with explicit range enforcement in `stutzthings/stutzthings-server/operations/query_service.go`
+- [x] T026 [US2] Implement REST handlers for node and attribute history endpoints in `stutzthings/stutzthings-server/api/history_handlers.go`
+- [x] T027 [US2] Implement MCP tools for node and attribute history in `stutzthings/stutzthings-server/mcpapi/history_tools.go`
 
 **Checkpoint**: User Story 2 is functional when both transports return the same ordered history results and validation failures for the same requests.
 
@@ -102,15 +102,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Add desired-state publication coverage for `/set` authorization and topic selection in `stutzthings/stutzthings-server/operations/command_service_test.go`
-- [ ] T029 [P] [US3] Add REST handler coverage for desired-state writes in `stutzthings/stutzthings-server/api/command_handlers_test.go`
-- [ ] T030 [P] [US3] Add MCP parity coverage for desired-state tools in `stutzthings/stutzthings-server/mcpapi/command_tools_test.go`
+- [x] T028 [P] [US3] Add desired-state publication coverage for `/set` authorization and topic selection in `stutzthings/stutzthings-server/operations/command_service_test.go`
+- [x] T029 [P] [US3] Add REST handler coverage for desired-state writes in `stutzthings/stutzthings-server/api/command_handlers_test.go`
+- [x] T030 [P] [US3] Add MCP parity coverage for desired-state tools in `stutzthings/stutzthings-server/mcpapi/command_tools_test.go`
 
 ### Implementation for User Story 3
 
-- [ ] T031 [US3] Implement desired-state publication against the existing MQTT command channel in `stutzthings/stutzthings-server/operations/command_service.go`
-- [ ] T032 [US3] Implement the REST desired-state endpoint in `stutzthings/stutzthings-server/api/command_handlers.go`
-- [ ] T033 [US3] Implement the MCP desired-state tool in `stutzthings/stutzthings-server/mcpapi/command_tools.go`
+- [x] T031 [US3] Implement desired-state publication against the existing MQTT command channel in `stutzthings/stutzthings-server/operations/command_service.go`
+- [x] T032 [US3] Implement the REST desired-state endpoint in `stutzthings/stutzthings-server/api/command_handlers.go`
+- [x] T033 [US3] Implement the MCP desired-state tool in `stutzthings/stutzthings-server/mcpapi/command_tools.go`
 
 **Checkpoint**: User Story 3 is functional when desired-state requests publish exactly once to the correct `/set` topic and transport parity holds.
 
@@ -124,15 +124,15 @@
 
 ### Tests for User Story 4
 
-- [ ] T034 [P] [US4] Add registration and token-issuance coverage in `stutzthings/stutzthings-server/operations/registration_service_test.go`
-- [ ] T035 [P] [US4] Add REST handler coverage for registration in `stutzthings/stutzthings-server/api/registration_handlers_test.go`
-- [ ] T036 [P] [US4] Add MCP parity coverage for registration in `stutzthings/stutzthings-server/mcpapi/registration_tools_test.go`
+- [x] T034 [P] [US4] Add registration and token-issuance coverage in `stutzthings/stutzthings-server/operations/registration_service_test.go`
+- [x] T035 [P] [US4] Add REST handler coverage for registration in `stutzthings/stutzthings-server/api/registration_handlers_test.go`
+- [x] T036 [P] [US4] Add MCP parity coverage for registration in `stutzthings/stutzthings-server/mcpapi/registration_tools_test.go`
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] Implement stateless device registration and plugin-compatible JWT issuance in `stutzthings/stutzthings-server/operations/registration_service.go`
-- [ ] T038 [US4] Implement the REST registration endpoint in `stutzthings/stutzthings-server/api/registration_handlers.go`
-- [ ] T039 [US4] Implement the MCP registration tool in `stutzthings/stutzthings-server/mcpapi/registration_tools.go`
+- [x] T037 [US4] Implement stateless device registration and plugin-compatible JWT issuance in `stutzthings/stutzthings-server/operations/registration_service.go`
+- [x] T038 [US4] Implement the REST registration endpoint in `stutzthings/stutzthings-server/api/registration_handlers.go`
+- [x] T039 [US4] Implement the MCP registration tool in `stutzthings/stutzthings-server/mcpapi/registration_tools.go`
 
 **Checkpoint**: User Story 4 is functional when registration returns unique device identities and constrained credentials through both transports.
 
@@ -142,10 +142,10 @@
 
 **Purpose**: Close the remaining parity, documentation, and verification gaps across all stories.
 
-- [ ] T040 [P] Add end-to-end MQTT plus REST/MCP token interoperability regression coverage in `stutzthings/stutzthings-server/main_test.go`
-- [ ] T041 [P] Add read-path performance verification for current-state and history in `stutzthings/stutzthings-server/operations/performance_test.go`
-- [ ] T042 [P] Document the local MQTT, REST, and MCP verification flow in `stutzthings/stutzthings-server/examples/local/README.md`
-- [ ] T043 Update the feature verification steps with the final implementation commands in `specs/002-device-ops-api/quickstart.md`
+- [x] T040 [P] Add end-to-end MQTT plus REST/MCP token interoperability regression coverage in `stutzthings/stutzthings-server/main_test.go`
+- [x] T041 [P] Add read-path performance verification for current-state and history in `stutzthings/stutzthings-server/operations/performance_test.go`
+- [x] T042 [P] Document the local MQTT, REST, and MCP verification flow in `stutzthings/stutzthings-server/examples/local/README.md`
+- [x] T043 Update the feature verification steps with the final implementation commands in `specs/002-device-ops-api/quickstart.md`
 
 ---
 

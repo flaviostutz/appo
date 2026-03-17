@@ -2,6 +2,8 @@
 
 Project-local engineering decisions for this repository. These decisions override or extend decisions from all higher-positioned scopes in `.xdrs/index.md`.
 
+Feature `002-device-ops-api` uses `_local-edr-002` as the canonical local verification workflow.
+
 ## patterns
 
 | ID | Title | File |

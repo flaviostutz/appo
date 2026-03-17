@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var errMQTTNotConnected = errors.New("mqtt client is not connected")
+
 type mqttRuntime struct {
 	client mqtt.Client
 	logger *logrus.Entry
@@ -88,7 +90,7 @@ func (r *mqttRuntime) Disconnect(quiesce uint) {
 
 func (r *mqttRuntime) Probe(ctx context.Context, config BridgeConfig) error {
 	if r == nil || r.client == nil || !r.client.IsConnected() {
-		return errors.New("mqtt client is not connected")
+		return errMQTTNotConnected
 	}
 
 	brokerURL, err := normalizeMQTTBrokerURL(config.MQTTBrokerURL, config.MQTTTLSEnabled)
@@ -124,6 +126,25 @@ func (r *mqttRuntime) Probe(ctx context.Context, config BridgeConfig) error {
 		return err
 	}
 	return connection.Close()
+}
+
+func (r *mqttRuntime) Publish(ctx context.Context, topic string, qos byte, retained bool, payload []byte) error {
+	if r == nil || r.client == nil || !r.client.IsConnected() {
+		return errMQTTNotConnected
+	}
+	token := r.client.Publish(topic, qos, retained, payload)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		token.Wait()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+		return token.Error()
+	}
 }
 
 func normalizeMQTTBrokerURL(rawURL string, tlsEnabled bool) (string, error) {

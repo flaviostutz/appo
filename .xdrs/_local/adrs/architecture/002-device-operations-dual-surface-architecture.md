@@ -17,6 +17,7 @@ Question: How should REST and MCP be added so both surfaces stay behaviorally co
 - Add a thin `api` package for HTTP request validation and JSON responses, split by responsibility.
 - Add a thin `mcpapi` package using `github.com/mark3labs/mcp-go`, mounted on the same HTTP server at `/mcp`, also split by responsibility.
 - Both transport adapters call the same `operations` methods so parity rules live in one place.
+- MCP authentication is supplied as a bearer token on each HTTP request so its auth model remains aligned with REST.
 - The service remains in the existing `stutzthings-server` process beside the bridge runtime and `/health` endpoint, while Mosquitto continues as a separate broker process enforcing the same JWT contract.
 
 ## Considered Options

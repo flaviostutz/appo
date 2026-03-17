@@ -17,11 +17,13 @@ Question: What JWT claims must the platform support across MQTT, REST, and MCP, 
 - `sub` identifies the principal. When the JWT is used with MQTT, the MQTT username MUST equal `sub`.
 - `publ` contains MQTT topic filters the principal may publish to.
 - `subs` contains MQTT topic filters the principal may subscribe to.
-- JWTs may also include standard claims such as `iat` and `exp`.
+- Registration-issued JWTs MUST also include `iss`, `iat`, and `exp`.
+- The first feature implementation uses HS256 with a shared base64-encoded secret supplied to both the Go service and Mosquitto.
 
 #### Topic-filter rules
 
 - `publ` and `subs` use standard MQTT topic-filter semantics, including `+` and `#`.
+- `+` matches exactly one topic segment and `#` matches only the remaining trailing segments.
 - Filters are evaluated against the canonical topic hierarchy:
   - telemetry: `account_id/device_id/device_instance_id/node_name/attribute_name`
   - command: `account_id/device_id/device_instance_id/node_name/attribute_name/set`
@@ -33,10 +35,11 @@ Question: What JWT claims must the platform support across MQTT, REST, and MCP, 
 - MQTT subscription is authorized by `subs` filters.
 - REST and MCP current-state/history reads are authorized when the addressed telemetry topic matches at least one filter in `publ` or `subs`.
 - REST and MCP desired-state writes are authorized when the addressed `/set` topic matches at least one filter in `subs`.
+- Authorization for telemetry reads does not imply authorization for `/set` publication, and `/set` authorization does not imply telemetry-read access outside normal MQTT filter matching.
 - Registration is authorized only when wildcard `publ` and `subs` filters cover the requested account/device namespace.
 - Authorization checks MUST always include the `account_id` segment so tenant isolation is preserved.
 - If the JWT does not authorize the requested path, the operation is rejected with no data leakage.
-- Whole-device reads may return only the authorized attributes; when any stored attributes are excluded, the result is marked partial.
+- Whole-device reads may return only the authorized attributes; when any stored attributes are excluded, the result is marked partial and reports a positive excluded-attribute count.
 
 ## Considered Options
 

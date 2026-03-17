@@ -3,30 +3,17 @@ services:
     image: eclipse-mosquitto:2
     container_name: stutzthings-local-mosquitto
     environment:
-      MQTT_USERNAME: test
-      MQTT_PASSWORD: test
+      JWT_SIGNING_SECRET_BASE64: ${JWT_SIGNING_SECRET_BASE64:-ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl}
     command:
-      - /bin/sh
-      - -ec
-      - |
-        cat >/mosquitto/config/mosquitto.conf <<'EOF'
-        listener 1883
-        allow_anonymous false
-        password_file /mosquitto/config/passwd
-        persistence true
-        persistence_location /mosquitto/data/
-        log_dest stdout
-        log_type error
-        log_type warning
-        log_type notice
-        log_type information
-        EOF
-        mosquitto_passwd -b -c /mosquitto/config/passwd "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
-        exec mosquitto -c /mosquitto/config/mosquitto.conf
+      - mosquitto
+      - -c
+      - /mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
     volumes:
       - ./.data/mosquitto:/mosquitto/data
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ${MOSQUITTO_JWT_AUTH_SO:?set MOSQUITTO_JWT_AUTH_SO}:/mosquitto/auth/libmosquitto_jwt_auth.so:ro
 
   influxdb:
     image: influxdb:3-core

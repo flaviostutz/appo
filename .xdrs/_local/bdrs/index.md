@@ -2,6 +2,8 @@
 
 Project-local business decisions for this repository. These decisions override or extend decisions from all higher-positioned scopes in `.xdrs/index.md`.
 
+Feature `002-device-ops-api` relies on `_local-bdr-003` for unified JWT ACL semantics and `_local-bdr-004` for registration-token issuance policy.
+
 ## product
 
 | ID | Title | File |

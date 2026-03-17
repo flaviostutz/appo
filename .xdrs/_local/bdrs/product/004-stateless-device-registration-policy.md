@@ -16,15 +16,19 @@ Question: How must device registration be authorized, what JWT must it return, a
 - Each successful request returns:
   - `account_id`
   - `device_id`
-  - a newly generated `device_instance_id`
+  - a newly generated lowercase UUIDv7 `device_instance_id`
   - `sub=account_id/device_id/device_instance_id`
   - `publ=[account_id/device_id/device_instance_id/+/+]`
   - `subs=[account_id/device_id/device_instance_id/+/+/set]`
+  - `iss`, `iat`, and `exp`
   - one signed JWT containing those claims
 - The issued JWT is limited to the new device instance only and is valid for Mosquitto, REST, and MCP.
+- The default registration-token lifetime is 24 hours unless deployment configuration overrides it.
 - When the JWT is used with MQTT, the client must connect with `username=sub` and `password=token`.
+- If a generated UUID collides within `(account_id, device_id)`, generation is retried until unique.
 - Registration does not create or retain a server-side registration session after the response is sent.
 - Failed or unauthorized registration requests must not consume or expose a partially created device identity.
+- The same base64-encoded signing secret source is shared between the Go service and Mosquitto; rotating that secret invalidates previously issued tokens unless an explicit overlap policy is introduced.
 
 ## Considered Options
 

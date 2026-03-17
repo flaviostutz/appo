@@ -2,6 +2,8 @@
 
 Project-local architectural decisions for this repository. These decisions override or extend decisions from all higher-positioned scopes in `.xdrs/index.md`.
 
+Feature `002-device-ops-api` is governed by `_local-adr-002` for the shared REST and MCP service shape.
+
 ## architecture
 
 | ID | Title | File |

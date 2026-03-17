@@ -15,10 +15,12 @@ Question: What is the canonical local developer workflow for end-to-end verifica
 - `make run` from `stutzthings/stutzthings-server` is the default local end-to-end command.
 - The command must bring up local dependencies and run the Go server with bridge, REST, MCP, and JWT settings suitable for development.
 - The same base64-encoded signing secret must be supplied to both the Go service and `wiomoc/mosquitto-jwt-auth`.
+- The local workflow requires an explicit `MOSQUITTO_JWT_AUTH_SO` path to the built plugin shared library and a shared `JWT_SIGNING_SECRET_BASE64` value.
 - Mosquitto must run with the plugin enabled so MQTT, REST, and MCP all exercise the same JWT semantics.
 - `examples/local/` remains the richer optional workflow for Grafana and direct infrastructure inspection.
 - Documentation and quickstart examples must reference `make run` first and `examples/local/` second.
 - Regression verification for this feature must include `make test`, `make lint`, and at least one manual MQTT + REST/MCP smoke flow against the local stack.
+- The one-command workflow is a local developer-experience requirement only; it does not constrain production deployment topology.
 
 ## Considered Options
 
