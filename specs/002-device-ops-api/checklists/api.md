@@ -16,16 +16,16 @@
 
 ## Requirement Clarity
 
-- [ ] CHK006 Is the distinction between `w` and `s` actions explicitly clear, given that the feature defines desired-state writes but no separate end-user attribute-write operation? [Ambiguity, Spec §FR-012, Spec §FR-015]
+- [ ] CHK006 Are MQTT, REST, and MCP authorization semantics all described in terms of the same `sub`, `publ`, and `subs` claims without reintroducing a parallel scope model? [Ambiguity, Spec §FR-010, Spec §FR-011, Data Model §JWTAccessClaims]
 - [ ] CHK007 Are the `from` and `to` timestamp semantics quantified clearly enough to avoid disagreement about inclusivity, exclusivity, timezone handling, and accepted formats? [Clarity, Spec §FR-024, Data Model §HistoryRange, Contract §FromTimestamp, Contract §ToTimestamp]
 - [ ] CHK008 Is the meaning of a “partial” whole-device result defined with enough precision that clients can distinguish filtered data from missing telemetry? [Clarity, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse]
 - [ ] CHK009 Is “same success or failure outcome and equivalent business data” between REST and MCP defined precisely enough to know which fields, statuses, and error classes must align? [Ambiguity, Spec §FR-009, Contract §REST, Contract §MCP]
-- [ ] CHK010 Are registration output requirements clear about whether the returned token includes expiry, issuer, or other mandatory claims beyond scope? [Gap, Spec §FR-022, Data Model §RegistrationGrant, Research §JWT]
+- [ ] CHK010 Are registration output requirements clear about whether the returned token includes expiry, issuer, or other mandatory claims beyond `sub`, `publ`, and `subs`? [Gap, Spec §FR-022, Data Model §RegistrationGrant, Research §JWT]
 
 ## Requirement Consistency
 
-- [ ] CHK011 Do the spec, data model, and REST contract all agree that registration is protected by `r:account_id/device_id` rather than the `i:` scope family? [Consistency, Spec §FR-019, Data Model §AccessScope, Contract §/registration]
-- [ ] CHK012 Do the spec and data model agree on the issued registration credential shape `i:account_id/device_id/device_instance_id/*/*:rws` without conflicting wildcard depth? [Consistency, Spec §FR-022, Data Model §RegistrationGrant]
+- [ ] CHK011 Do the spec, data model, and REST contract all agree that registration is protected by wildcard `publ` and `subs` topic filters covering the requested account/device namespace? [Consistency, Spec §FR-019, Data Model §RegistrationGrant, Contract §/registration]
+- [ ] CHK012 Do the spec and data model agree on the issued registration credential shape `sub=account_id/device_id/device_instance_id`, `publ=[.../+/+]`, and `subs=[.../+/+/set]` without conflicting wildcard depth? [Consistency, Spec §FR-022, Data Model §RegistrationGrant]
 - [ ] CHK013 Do the whole-device read requirements, data model, and contracts describe partial snapshots consistently across business rules and response shape? [Consistency, Spec §FR-006, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse, Contract §MCP]
 - [ ] CHK014 Do the history requirements in the spec match the contracts in using explicit `from` and `to` timestamps rather than the older `since` query style from the source description? [Consistency, Spec §FR-003, Spec §FR-004, Spec §FR-024, Contract §REST]
 - [ ] CHK015 Do the command requirements align with the existing MQTT `/set` topic XDR without redefining the command path differently in the feature docs? [Consistency, Spec §FR-016, XDR §_local-bdr-001]
@@ -46,14 +46,14 @@
 ## Edge Case Coverage
 
 - [ ] CHK023 Are malformed path handling requirements explicit for every route shape, including device-level reads, attribute reads, history routes, and registration inputs? [Coverage, Spec §FR-023, Edge Case]
-- [ ] CHK024 Are wildcard authorization edge cases defined clearly enough to prevent ambiguity about `*` matching an entire segment versus part of a segment? [Clarity, Spec §FR-013, Spec §FR-020, Data Model §AccessScope]
+- [ ] CHK024 Are wildcard authorization edge cases defined clearly enough to prevent ambiguity about MQTT `+` and `#` topic-filter semantics across telemetry and `/set` topics? [Clarity, Spec §FR-013, Spec §FR-020, Data Model §JWTAccessClaims]
 - [ ] CHK025 Does the feature define how history ordering should behave when multiple observations share the same timestamp? [Gap, Data Model §DeviceObservation, Plan §Technical Context]
 - [ ] CHK026 Are no-data scenarios distinguished from forbidden scenarios for both current-state and history queries in a way that prevents accidental data disclosure? [Coverage, Spec §FR-014, Spec §FR-025]
 
 ## Non-Functional Requirements
 
-- [ ] CHK027 Are pagination or maximum-result requirements defined for large history windows so the feature’s behavior is bounded under heavy result sets? [Gap, Edge Case, Contract §HistoryResponse, Plan §Technical Context]
-- [ ] CHK028 Are bearer-token lifetime, signing-key management, and rotation requirements documented if registration-issued credentials are intended for real device use? [Gap, Research §JWT, Spec §FR-022]
+- [ ] CHK027 Are maximum-result or other bounding requirements defined for large history windows so the feature’s behavior is bounded under heavy result sets even without pagination? [Gap, Edge Case, Contract §HistoryResponse, Plan §Technical Context]
+- [ ] CHK028 Are bearer-token lifetime, shared base64 signing-secret management, and rotation requirements documented if registration-issued credentials are intended for real device use? [Gap, Research §JWT, Spec §FR-022]
 - [ ] CHK029 Are observability and audit requirements specified for auth denials, registration issuance, and desired-state publication failures? [Gap]
 - [ ] CHK030 Are MCP transport requirements defined tightly enough to know whether the same bearer token is conveyed per HTTP request, per session, or by some other mechanism? [Gap, Contract §MCP]
 
@@ -65,7 +65,7 @@
 
 ## Ambiguities & Conflicts
 
-- [ ] CHK034 Does the feature intentionally include `w` in device-operation scopes even though the documented external command operation is the `s`-driven desired-state path? [Conflict, Spec §FR-012, Spec §FR-015]
+- [ ] CHK034 Is the mapping from MQTT topic filters to REST/MCP authorization explicit enough that readers can tell why current-state/history use telemetry filters while desired-state writes use `/set` filters? [Conflict, Spec §FR-014, Spec §FR-016]
 - [ ] CHK035 Is the relationship between the original source excerpt’s `since=2d` examples and the clarified `from`/`to` contract explicitly resolved for downstream consumers? [Conflict, Source Spec, Spec §Clarifications, Contract §REST]
 - [ ] CHK036 Are registration requirements clear on whether uniqueness must be globally random, sequential, or deterministic within `(account_id, device_id)`? [Ambiguity, Spec §FR-021]
 

@@ -2,9 +2,9 @@
 
 ## Context and Problem Statement
 
-The feature requires the same device operations to be available through both a REST API and an MCP server. The repository currently has a single-process Go server using `net/http` and an in-process bridge package.
+The feature requires the same device operations to be available through both a REST API and an MCP server while sharing the same JWT model already enforced by Mosquitto. The repository currently has a single-process Go server using `net/http` and an in-process bridge package.
 
-Question: How should REST and MCP be added so both surfaces stay behaviorally consistent without duplicating business logic?
+Question: How should REST and MCP be added so both surfaces stay behaviorally consistent, reuse MQTT JWT authorization, and avoid duplicating business logic?
 
 ## Decision Outcome
 
@@ -13,11 +13,11 @@ Question: How should REST and MCP be added so both surfaces stay behaviorally co
 ### Implementation Details
 
 - Add a shared `operations` package that owns current-state reads, history queries, desired-state publication, and registration.
-- Add an `auth` package that parses bearer tokens and evaluates `i:` and `r:` scopes.
-- Add a thin `api` package for HTTP request validation and JSON responses.
-- Add a thin `mcpapi` package using `github.com/mark3labs/mcp-go`, mounted on the same HTTP server at `/mcp`.
+- Add an `auth` package that validates bearer JWTs and evaluates plugin-compatible `sub`, `publ`, and `subs` claims against MQTT topic paths.
+- Add a thin `api` package for HTTP request validation and JSON responses, split by responsibility.
+- Add a thin `mcpapi` package using `github.com/mark3labs/mcp-go`, mounted on the same HTTP server at `/mcp`, also split by responsibility.
 - Both transport adapters call the same `operations` methods so parity rules live in one place.
-- The service remains in the existing `stutzthings-server` process beside the bridge runtime and `/health` endpoint.
+- The service remains in the existing `stutzthings-server` process beside the bridge runtime and `/health` endpoint, while Mosquitto continues as a separate broker process enforcing the same JWT contract.
 
 ## Considered Options
 

@@ -1,47 +1,51 @@
-# _local-bdr-003: Device Authorization Scope Grammar and Wildcard Rules
+# _local-bdr-003: JWT Topic ACL Claims for MQTT, REST, and MCP
 
 ## Context and Problem Statement
 
-The device-operations feature introduces protected reads, history queries, desired-state writes, and protected registration. The platform needs one durable authorization grammar that preserves tenant isolation while allowing bounded wildcard delegation.
+The device-operations feature introduces protected reads, history queries, desired-state writes, MQTT broker authorization, and protected registration. The platform needs one durable JWT authorization model that works unchanged in Mosquitto, REST, and MCP.
 
-Question: What bearer-token scope grammars must the platform support for device operations and registration, and how are wildcard matches evaluated?
+Question: What JWT claims must the platform support across MQTT, REST, and MCP, and how are topic-filter matches evaluated?
 
 ## Decision Outcome
 
-**Two scope families: `i:` for device operations and `r:` for registration; `*` matches whole path segments only**
+**Use Mosquitto-plugin-compatible JWT claims `sub`, `publ`, and `subs`; derive REST and MCP authorization from MQTT topic filters**
 
 ### Implementation Details
 
-#### Device-operation scopes
+#### JWT claims
 
-- Grammar: `i:account_id/device_id/device_instance_id/node_name/attribute_name:actions`
-- `actions` may contain only `r`, `w`, and `s`
-  - `r`: read current state and history
-  - `w`: attribute write capability when applicable
-  - `s`: desired-state command publication
-- `*` is allowed in any path segment and matches exactly one whole segment.
+- `sub` identifies the principal. When the JWT is used with MQTT, the MQTT username MUST equal `sub`.
+- `publ` contains MQTT topic filters the principal may publish to.
+- `subs` contains MQTT topic filters the principal may subscribe to.
+- JWTs may also include standard claims such as `iat` and `exp`.
 
-#### Registration scopes
+#### Topic-filter rules
 
-- Grammar: `r:account_id/device_id`
-- `*` is allowed in both path segments, for example `r:*/*`.
-- Registration scopes never include an action suffix.
+- `publ` and `subs` use standard MQTT topic-filter semantics, including `+` and `#`.
+- Filters are evaluated against the canonical topic hierarchy:
+  - telemetry: `account_id/device_id/device_instance_id/node_name/attribute_name`
+  - command: `account_id/device_id/device_instance_id/node_name/attribute_name/set`
+- Matching is filter-based; substring or ad-hoc prefix matching outside MQTT semantics is forbidden.
 
-#### Matching rules
+#### Cross-surface authorization rules
 
-- Matching is segment-by-segment; substring or prefix matching is forbidden.
+- MQTT publication is authorized by `publ` filters.
+- MQTT subscription is authorized by `subs` filters.
+- REST and MCP current-state/history reads are authorized when the addressed telemetry topic matches at least one filter in `publ` or `subs`.
+- REST and MCP desired-state writes are authorized when the addressed `/set` topic matches at least one filter in `subs`.
+- Registration is authorized only when wildcard `publ` and `subs` filters cover the requested account/device namespace.
 - Authorization checks MUST always include the `account_id` segment so tenant isolation is preserved.
-- If a scope does not authorize the requested path and action, the operation is rejected with no data leakage.
+- If the JWT does not authorize the requested path, the operation is rejected with no data leakage.
 - Whole-device reads may return only the authorized attributes; when any stored attributes are excluded, the result is marked partial.
 
 ## Considered Options
 
-- (CHOSEN) **Attribute-level `i:` scopes plus separate `r:` registration scopes**
-  - Reason: Fits the clarified feature behavior, supports partial whole-device reads, and keeps registration authorization simpler.
-- (REJECTED) **Coarser device-instance scopes only**
-  - Reason: Cannot represent attribute-level filtering or partial results cleanly.
-- (REJECTED) **One generic scope grammar for all protected operations**
-  - Reason: Registration authorization is structurally different from attribute-level device access.
+- (CHOSEN) **Mosquitto-plugin-compatible JWT claims reused across MQTT, REST, and MCP**
+  - Reason: Eliminates transport-specific auth drift and makes registration-issued credentials immediately useful everywhere.
+- (REJECTED) **Custom `i:` and `r:` scope families**
+  - Reason: Duplicates broker authorization semantics and creates two sources of truth.
+- (REJECTED) **Separate JWT models for MQTT and HTTP transports**
+  - Reason: Makes parity and registration much harder.
 
 ## References
 
@@ -49,42 +53,3 @@ Question: What bearer-token scope grammars must the platform support for device 
 - Feature plan: [specs/002-device-ops-api/plan.md](../../../../specs/002-device-ops-api/plan.md)
 - Related: [product/001-mqtt-topic-structure.md](001-mqtt-topic-structure.md)
 - Related: [product/002-influxdb-device-attributes-data-model.md](002-influxdb-device-attributes-data-model.md)
-*** Add File: /Users/flaviostutz/Documents/development/flaviostutz/appo/.xdrs/_local/bdrs/product/004-stateless-device-registration-policy.md
-# _local-bdr-004: Stateless Device Registration Policy
-
-## Context and Problem Statement
-
-The platform needs a protected registration flow that creates a new device instance identity and returns credentials the device can immediately use for telemetry and command participation, without storing registration session state on the server.
-
-Question: How must device registration be authorized, what must it return, and what state does the server retain afterward?
-
-## Decision Outcome
-
-**Protected `POST /registration` that issues one new device instance identity and one `rws` credential scoped to that instance; no server-side registration session is retained**
-
-### Implementation Details
-
-- `POST /registration` requires a bearer token with registration scope `r:account_id/device_id`.
-- Each successful request returns:
-  - `account_id`
-  - `device_id`
-  - a newly generated `device_instance_id`
-  - one JWT with scope `i:account_id/device_id/device_instance_id/*/*:rws`
-- The issued JWT is limited to the new device instance only.
-- Registration does not create or retain a server-side registration session after the response is sent.
-- Failed or unauthorized registration requests must not consume or expose a partially created device identity.
-
-## Considered Options
-
-- (CHOSEN) **Protected stateless registration with one scoped JWT**
-  - Reason: Matches the feature spec, minimizes operational state, and keeps the device bootstrap experience simple.
-- (REJECTED) **Public registration endpoint**
-  - Reason: Creates an unnecessary abuse surface for identity creation.
-- (REJECTED) **Multiple returned credentials**
-  - Reason: Adds complexity without a requirement for separate publish/command identities.
-
-## References
-
-- Feature spec: [specs/002-device-ops-api/spec.md](../../../../specs/002-device-ops-api/spec.md)
-- Feature plan: [specs/002-device-ops-api/plan.md](../../../../specs/002-device-ops-api/plan.md)
-- Related: [product/003-device-authorization-scope-grammar.md](003-device-authorization-scope-grammar.md)

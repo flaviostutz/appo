@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: |
     Planned REST contract for device state reads, history reads, desired-state writes,
-    and stateless device registration.
+    and stateless device registration using the same JWT claim model as Mosquitto.
 servers:
   - url: http://127.0.0.1:8080
 security:
@@ -13,7 +13,7 @@ paths:
   /registration:
     post:
       summary: Register a new device instance
-      description: Requires a bearer token with registration scope `r:account_id/device_id`.
+      description: Requires a bearer JWT whose wildcard `publ` and `subs` filters cover the requested account/device namespace.
       requestBody:
         required: true
         content:
@@ -34,6 +34,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}:
     get:
       summary: Read latest device state
+      description: Authorized when each returned telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -52,6 +53,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/{attribute_name}:
     get:
       summary: Read latest attribute state
+      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -71,6 +73,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
     put:
       summary: Publish desired state for an attribute
+      description: Authorized when the addressed `/set` topic matches at least one filter in the caller's `subs` claim.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -97,6 +100,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/history:
     get:
       summary: Read node history
+      description: Authorized when the addressed telemetry topics match at least one filter in the caller's `publ` or `subs` claim.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -106,7 +110,7 @@ paths:
         - $ref: '#/components/parameters/ToTimestamp'
       responses:
         '200':
-          description: History page for all authorized attributes under the node
+          description: History result for all authorized attributes under the node
           content:
             application/json:
               schema:
@@ -120,6 +124,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/{attribute_name}/history:
     get:
       summary: Read attribute history
+      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -130,7 +135,7 @@ paths:
         - $ref: '#/components/parameters/ToTimestamp'
       responses:
         '200':
-          description: History page for the attribute
+          description: History result for the attribute
           content:
             application/json:
               schema:
@@ -212,6 +217,10 @@ components:
         - type: number
         - type: string
         - type: boolean
+    TopicFilterList:
+      type: array
+      items:
+        type: string
     Observation:
       type: object
       required: [accountId, deviceId, deviceInstanceId, nodeName, attributeName, observedAt, value]
@@ -261,10 +270,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Observation'
-        nextCursor:
-          oneOf:
-            - type: string
-            - type: 'null'
     DesiredStateRequest:
       type: object
       required: [value]
@@ -285,13 +290,17 @@ components:
         deviceId: { type: string }
     RegistrationResponse:
       type: object
-      required: [accountId, deviceId, deviceInstanceId, token, scope]
+      required: [accountId, deviceId, deviceInstanceId, sub, publ, subs, token]
       properties:
         accountId: { type: string }
         deviceId: { type: string }
         deviceInstanceId: { type: string }
+        sub: { type: string }
+        publ:
+          $ref: '#/components/schemas/TopicFilterList'
+        subs:
+          $ref: '#/components/schemas/TopicFilterList'
         token: { type: string }
-        scope: { type: string }
     ErrorResponse:
       type: object
       required: [error, message]

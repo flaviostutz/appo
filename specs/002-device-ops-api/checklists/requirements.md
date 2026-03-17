@@ -33,4 +33,4 @@
 
 - All checklist items pass after first validation.
 - Scope is intentionally limited to the selected operations excerpt and excludes broader server capabilities outside device reads, history, desired-state writes, authorization, and registration.
-- Existing local XDRs already cover MQTT topic structure and stored device observation modeling; new XDR candidates are limited to authorization scope grammar, registration policy, REST/MCP parity, and local verification workflow.
+- Existing local XDRs already cover MQTT topic structure and stored device observation modeling; new XDR candidates are limited to JWT topic-filter claims, registration policy, REST/MCP parity, and local verification workflow.

@@ -56,6 +56,14 @@ Messages with an empty, null, or unparseable payload must be silently discarded 
 - The payload MUST follow the same scalar or JSON schema defined above.
 - Devices MUST subscribe to their own `/set` topics and act on received values.
 
+#### JWT ACL alignment
+
+- Mosquitto, REST, and MCP authorization MUST derive from this topic structure.
+- JWT `publ` filters authorize publication to telemetry topics shaped as `[account_id]/[device_id]/[device_instance_id]/[node_name]/[attribute_name]`.
+- JWT `subs` filters authorize subscription to command topics shaped as `[account_id]/[device_id]/[device_instance_id]/[node_name]/[attribute_name]/set`.
+- REST and MCP current-state/history reads reuse the telemetry topic path for authorization checks.
+- REST and MCP desired-state writes reuse the `/set` topic path for authorization checks.
+
 ## Considered Options
 
 * (CHOSEN) **5-segment hierarchy** — Account / Device / Instance / Node / Attribute
