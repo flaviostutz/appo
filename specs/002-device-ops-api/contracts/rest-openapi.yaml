@@ -27,6 +27,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -34,7 +36,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}:
     get:
       summary: Read latest device state
-      description: Authorized when each returned telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
+      description: Authorized when each returned telemetry topic matches at least one filter in the caller's `publ` or `subs` claim. An authorized empty result returns `attributes=[]`, `isPartial=false`, and `excludedAttributeCount=0`.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -46,6 +48,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceStateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -53,7 +57,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/{attribute_name}:
     get:
       summary: Read latest attribute state
-      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
+      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim. An authorized empty result returns `found=false` and `observation=null`.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -67,6 +71,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributeStateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -100,7 +106,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/history:
     get:
       summary: Read node history
-      description: Authorized when the addressed telemetry topics match at least one filter in the caller's `publ` or `subs` claim.
+      description: Authorized when the addressed telemetry topics match at least one filter in the caller's `publ` or `subs` claim. Results are ordered by `observedAt` ascending; equal timestamps are secondarily ordered by `nodeName`, `attributeName`, and canonical value string. Empty successful reads return `observations=[]`.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -124,7 +130,7 @@ paths:
   /{account_id}/{device_id}/{device_instance_id}/{node_name}/{attribute_name}/history:
     get:
       summary: Read attribute history
-      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim.
+      description: Authorized when the addressed telemetry topic matches at least one filter in the caller's `publ` or `subs` claim. Results are ordered by `observedAt` ascending; equal timestamps are secondarily ordered by canonical value string. Empty successful reads return `observations=[]`.
       parameters:
         - $ref: '#/components/parameters/AccountId'
         - $ref: '#/components/parameters/DeviceId'
@@ -182,6 +188,7 @@ components:
       name: from
       in: query
       required: true
+      description: Inclusive lower time bound in RFC3339 UTC format.
       schema:
         type: string
         format: date-time
@@ -189,6 +196,7 @@ components:
       name: to
       in: query
       required: true
+      description: Exclusive upper time bound in RFC3339 UTC format.
       schema:
         type: string
         format: date-time
@@ -246,12 +254,15 @@ components:
             - type: 'null'
     DeviceStateResponse:
       type: object
-      required: [accountId, deviceId, deviceInstanceId, isPartial, attributes]
+      required: [accountId, deviceId, deviceInstanceId, isPartial, excludedAttributeCount, attributes]
       properties:
         accountId: { type: string }
         deviceId: { type: string }
         deviceInstanceId: { type: string }
         isPartial: { type: boolean }
+        excludedAttributeCount:
+          type: integer
+          minimum: 0
         attributes:
           type: array
           items:
@@ -268,6 +279,7 @@ components:
           format: date-time
         observations:
           type: array
+          maxItems: 10000
           items:
             $ref: '#/components/schemas/Observation'
     DesiredStateRequest:
@@ -290,7 +302,7 @@ components:
         deviceId: { type: string }
     RegistrationResponse:
       type: object
-      required: [accountId, deviceId, deviceInstanceId, sub, publ, subs, token]
+      required: [accountId, deviceId, deviceInstanceId, sub, publ, subs, iss, issuedAt, expiresAt, token]
       properties:
         accountId: { type: string }
         deviceId: { type: string }
@@ -300,10 +312,19 @@ components:
           $ref: '#/components/schemas/TopicFilterList'
         subs:
           $ref: '#/components/schemas/TopicFilterList'
+        iss: { type: string }
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
         token: { type: string }
     ErrorResponse:
       type: object
       required: [error, message]
       properties:
-        error: { type: string }
+        error:
+          type: string
+          enum: [invalid_input, window_too_large, unauthorized, forbidden, backend_failure]
         message: { type: string }

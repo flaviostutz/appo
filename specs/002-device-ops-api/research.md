@@ -22,6 +22,36 @@
 - RS256/JWKS from day one: stronger federation story, but more moving parts than the current monolithic service and local workflow require.
 - Separate secrets for broker and API: rejected because it breaks the one-token model.
 
+## Decision: Registration-issued device JWTs include standard timing claims and a bounded lifetime
+
+**Rationale**:
+- Device-registration tokens are intended for immediate operational use, so the token payload needs explicit issuance and expiry semantics rather than only transport-specific topic claims.
+- Requiring `iss`, `iat`, and `exp` keeps the credential format explicit across MQTT, REST, and MCP and gives operators a clear rotation boundary.
+- A default 24-hour lifetime is long enough for the local workflow and short enough to avoid pretending the first implementation already has indefinite credential management solved.
+
+**Alternatives considered**:
+- Non-expiring tokens: rejected because they make shared-secret rotation and compromise response undefined.
+- Leaving lifetime entirely unspecified: rejected because it makes registration output incomplete and untestable.
+
+## Decision: Shared-secret rotation is coordinated across the Go service and Mosquitto
+
+**Rationale**:
+- The service and broker must accept the same token, so rotation has to be described as one coordinated action rather than two independent configuration changes.
+- The simplest first-release rule is that rotating the shared base64 secret invalidates previously issued registration tokens unless an explicit overlap policy is introduced later.
+
+**Alternatives considered**:
+- Independent broker and API rotation schedules: rejected because they break the one-token contract.
+- Silent overlap behavior without documentation: rejected because operators could not reason about token validity.
+
+## Decision: MCP authentication is per HTTP request, not session state
+
+**Rationale**:
+- The parity requirement is easiest to preserve when MCP uses the same bearer-token parsing model as REST.
+- Per-request authentication avoids hidden session state that could make REST and MCP diverge for the same token.
+
+**Alternatives considered**:
+- Session-bound MCP authentication: rejected because it would create transport-specific auth semantics.
+
 ## Decision: Derive REST and MCP authorization from MQTT topic filters
 
 **Rationale**:

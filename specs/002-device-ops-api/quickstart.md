@@ -57,7 +57,12 @@ Expected response fields:
 - `sub`
 - `publ`
 - `subs`
+- `iss`
+- `issuedAt`
+- `expiresAt`
 - `token`
+
+The returned token is expected to include `iss`, `iat`, and `exp`, with a default 24-hour lifetime unless the deployment overrides that policy.
 
 ## Exercise MQTT with the issued token
 
@@ -120,7 +125,7 @@ The `mosquitto_sub` session should receive the `/set` message for the device.
 
 ## Exercise the MCP endpoint
 
-Connect an MCP client or inspector to `http://127.0.0.1:8080/mcp` with `Authorization: Bearer <issued-token>` and call:
+Connect an MCP client or inspector to `http://127.0.0.1:8080/mcp` and send `Authorization: Bearer <issued-token>` on every HTTP request. Then call:
 
 - `get_attribute_state`
 - `get_device_state`

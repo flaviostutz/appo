@@ -7,6 +7,8 @@
 
 Extend `stutzthings/stutzthings-server` from a bridge-plus-health binary into a single-process Go service that exposes device operations through REST and MCP while continuing to use a Mosquitto broker protected by `wiomoc/mosquitto-jwt-auth` as the shared telemetry and `/set` command transport. The implementation will introduce a shared operations service layer for current-state reads, history queries, desired-state command publication, registration, and canonical input validation; a JWT auth layer that validates plugin-compatible `sub`, `publ`, and `subs` claims; and thin REST/MCP adapters mounted into the existing `net/http` server while Mosquitto enforces the same JWT on MQTT connections.
 
+The implementation deliberately reuses the existing bridge-owned MQTT and Influx integrations, topic hierarchy, and observation storage model. Net-new work for this feature is limited to JWT auth, request validation, read/query orchestration, desired-state publishing, registration issuance, REST handlers, MCP tools, and the local workflow wiring needed to exercise the combined surface.
+
 ## Technical Context
 
 **Language/Version**: Go 1.25.0  
@@ -16,7 +18,7 @@ Extend `stutzthings/stutzthings-server` from a bridge-plus-health binary into a 
 **Target Platform**: Single Go server and plugin-enabled Mosquitto running on Linux/macOS with local Docker-backed development infrastructure  
 **Project Type**: Monorepo Go web service with embedded bridge runtime and external broker integration  
 **Performance Goals**: Meet spec goals of p95 current-state reads under 2s, p95 history reads under 3s, and exact REST/MCP business parity  
-**Constraints**: Preserve tenant isolation, keep files under 400 lines, use explicit `from`/`to` history bounds, use one JWT claim model across MQTT/REST/MCP, enforce MQTT username=`sub`, share a base64-encoded signing secret between the Go service and Mosquitto plugin, centralize device-operation validation so REST and MCP cannot drift, and avoid duplicate business logic across REST and MCP  
+**Constraints**: Preserve tenant isolation, keep files under 400 lines, use explicit `from`/`to` history bounds, treat `from` as inclusive and `to` as exclusive RFC3339 UTC instants, reject history reads larger than 10,000 observations, use one JWT claim model across MQTT/REST/MCP, enforce MQTT username=`sub`, share a base64-encoded signing secret between the Go service and Mosquitto plugin, issue registration tokens with `iss`/`iat`/`exp` and a default 24-hour TTL, centralize device-operation validation so REST and MCP cannot drift, and avoid duplicate business logic across REST and MCP  
 **Scale/Scope**: One service module, one plugin-enabled broker config, 6 external operations, one MCP endpoint, and time-bounded history access over time-series data already stored by the bridge
 
 ## Constitution Check
@@ -94,6 +96,12 @@ stutzthings/stutzthings-server/
 ```
 
 **Structure Decision**: Keep the existing single Go module and add thin adapter packages around a shared `operations` service. `auth` owns JWT validation and MQTT topic-filter matching, `operations` owns business rules, canonical device-operation validation, and Influx/MQTT coordination, `api` owns HTTP serialization and request binding, and `mcpapi` owns MCP tool registration and transport wiring. Mosquitto remains a separate broker process, but it enforces the same JWT contract through `wiomoc/mosquitto-jwt-auth`.
+
+## Reuse Boundaries
+
+- Reused as-is: bridge MQTT connection management, bridge Influx client plumbing, canonical MQTT topic structure, canonical observation storage model, and health/server scaffolding.
+- Extended in place: local docker workflow, bridge query helpers, and top-level server bootstrap.
+- Net-new for this feature: JWT verification/signing helpers, topic-filter matcher, shared operations service, REST handlers, MCP tools, registration issuance, parity tests, and auth/audit observability around device operations.
 
 ## Complexity Tracking
 

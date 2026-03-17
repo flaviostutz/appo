@@ -24,6 +24,7 @@
 - `sub`: principal identifier; when used with MQTT, this must equal the MQTT username
 - `publ`: MQTT topic filters the principal may publish to
 - `subs`: MQTT topic filters the principal may subscribe to
+- `iss`: token issuer identifier
 - `iat`: issued-at time
 - `exp`: expiry time
 
@@ -32,6 +33,8 @@
 - Topic filters must follow the existing telemetry and `/set` topic hierarchy.
 - For REST and MCP current-state/history reads, the addressed telemetry topic must match at least one filter in `publ` or `subs`.
 - For REST and MCP desired-state writes, the addressed `/set` topic must match at least one filter in `subs`.
+- `iss`, `iat`, and `exp` are mandatory on registration-issued credentials.
+- Registration-issued credentials default to a 24-hour lifetime unless deployment configuration overrides the TTL.
 
 **Relationships**:
 - One JWT may authorize many `DeviceIdentity` values depending on wildcard topic filters.
@@ -53,6 +56,7 @@
 - Exactly one typed value field is populated per row.
 - Tags must match the identity hierarchy already defined by the bridge XDRs.
 - `timestamp` is bounded by the caller's `from`/`to` range in history reads.
+- History responses sort observations by `timestamp` ascending and break ties by `(node_name, attribute_name, canonical_value_string)` ascending.
 
 ## DeviceStateSnapshot
 
@@ -62,10 +66,13 @@
 - `device_instance`: `(account_id, device_id, device_instance_id)`
 - `attributes`: collection of latest `DeviceObservation` values keyed by `(node_name, attribute_name)`
 - `is_partial`: boolean indicating that some attributes were excluded by authorization filtering
+- `excluded_attribute_count`: count of stored attributes withheld from the caller because they were not authorized
 
 **Validation**:
 - Contains at most one latest observation per `(node_name, attribute_name)`.
 - `is_partial` is `true` when any stored attribute for the device instance was withheld from the caller because the telemetry topic did not match the caller's JWT topic filters.
+- `excluded_attribute_count` is `0` for complete or empty authorized snapshots and greater than `0` when `is_partial=true`.
+- An authorized device-instance read with no stored telemetry returns `attributes=[]`, `is_partial=false`, and `excluded_attribute_count=0`.
 
 ## HistoryRange
 
@@ -78,7 +85,10 @@
 **Validation**:
 - Both timestamps are required.
 - `from < to` must hold.
+- Both timestamps must be RFC3339 instants expressed in UTC.
 - Unparseable or inverted timestamps produce a validation error before querying storage.
+- Relative shortcuts such as `since=2d` are invalid for this feature.
+- Requests expected to exceed 10,000 observations are rejected before returning a partial history payload.
 
 ## DesiredStateCommand
 
@@ -101,15 +111,20 @@
 **Fields**:
 - `account_id`
 - `device_id`
-- `device_instance_id`: newly issued identifier
+- `device_instance_id`: newly issued lowercase UUIDv7 identifier
 - `sub`: `account_id/device_id/device_instance_id`
 - `publ`: `account_id/device_id/device_instance_id/+/+`
 - `subs`: `account_id/device_id/device_instance_id/+/+/set`
+- `iss`: `stutzthings-server` or deployment-specific issuer string
+- `iat`: token issuance instant
+- `exp`: token expiry instant
 - `token`: one JWT limited to the new instance
 
 **Validation**:
 - Caller must present a JWT whose wildcard `publ` and `subs` filters authorize the requested account and device namespace.
 - One registration request returns one new `device_instance_id` and one JWT.
+- `device_instance_id` generation retries on collision until unique within `(account_id, device_id)`.
+- The same base64-encoded signing secret source is shared between the Go service and Mosquitto; rotating that secret invalidates older registration-issued tokens unless an overlap policy is configured.
 - No server-side registration session is retained after issuance.
 
 ## Relationships

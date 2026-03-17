@@ -8,66 +8,66 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are separate requirements defined for latest-attribute reads, whole-device reads, node history, and attribute history rather than leaving any read shape implicit? [Completeness, Spec §FR-001, Spec §FR-002, Spec §FR-003, Spec §FR-004]
-- [ ] CHK002 Are desired-state publication requirements defined independently from current-state reads so command behavior is not inferred from read behavior? [Completeness, Spec §FR-015, Spec §FR-016, Spec §FR-017]
-- [ ] CHK003 Are registration authorization, identity issuance, and returned credential requirements all documented as separate concerns? [Completeness, Spec §FR-018, Spec §FR-019, Spec §FR-021, Spec §FR-022]
-- [ ] CHK004 Are REST and MCP both described as first-class delivery surfaces for every operation family, not only as a general statement of parity? [Completeness, Spec §FR-008, Spec §FR-009, Contract §REST, Contract §MCP]
-- [ ] CHK005 Does the spec define what information an empty successful read or history result contains, rather than only stating that defaults must not be fabricated? [Gap, Spec §FR-025, Contract §AttributeStateResponse, Contract §HistoryResponse]
+- [x] CHK001 Are separate requirements defined for latest-attribute reads, whole-device reads, node history, and attribute history rather than leaving any read shape implicit? [Completeness, Spec §FR-001, Spec §FR-002, Spec §FR-003, Spec §FR-004]
+- [x] CHK002 Are desired-state publication requirements defined independently from current-state reads so command behavior is not inferred from read behavior? [Completeness, Spec §FR-015, Spec §FR-016, Spec §FR-017]
+- [x] CHK003 Are registration authorization, identity issuance, and returned credential requirements all documented as separate concerns? [Completeness, Spec §FR-018, Spec §FR-019, Spec §FR-021, Spec §FR-022]
+- [x] CHK004 Are REST and MCP both described as first-class delivery surfaces for every operation family, not only as a general statement of parity? [Completeness, Spec §FR-008, Spec §FR-009, Contract §REST, Contract §MCP]
+- [x] CHK005 Does the spec define what information an empty successful read or history result contains, rather than only stating that defaults must not be fabricated? [Gap, Spec §FR-025, Contract §AttributeStateResponse, Contract §HistoryResponse]
 
 ## Requirement Clarity
 
-- [ ] CHK006 Are MQTT, REST, and MCP authorization semantics all described in terms of the same `sub`, `publ`, and `subs` claims without reintroducing a parallel scope model? [Ambiguity, Spec §FR-010, Spec §FR-011, Data Model §JWTAccessClaims]
-- [ ] CHK007 Are the `from` and `to` timestamp semantics quantified clearly enough to avoid disagreement about inclusivity, exclusivity, timezone handling, and accepted formats? [Clarity, Spec §FR-024, Data Model §HistoryRange, Contract §FromTimestamp, Contract §ToTimestamp]
-- [ ] CHK008 Is the meaning of a “partial” whole-device result defined with enough precision that clients can distinguish filtered data from missing telemetry? [Clarity, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse]
-- [ ] CHK009 Is “same success or failure outcome and equivalent business data” between REST and MCP defined precisely enough to know which fields, statuses, and error classes must align? [Ambiguity, Spec §FR-009, Contract §REST, Contract §MCP]
-- [ ] CHK010 Are registration output requirements clear about whether the returned token includes expiry, issuer, or other mandatory claims beyond `sub`, `publ`, and `subs`? [Gap, Spec §FR-022, Data Model §RegistrationGrant, Research §JWT]
+- [x] CHK006 Are MQTT, REST, and MCP authorization semantics all described in terms of the same `sub`, `publ`, and `subs` claims without reintroducing a parallel scope model? [Ambiguity, Spec §FR-010, Spec §FR-011, Data Model §JWTAccessClaims]
+- [x] CHK007 Are the `from` and `to` timestamp semantics quantified clearly enough to avoid disagreement about inclusivity, exclusivity, timezone handling, and accepted formats? [Clarity, Spec §FR-024, Data Model §HistoryRange, Contract §FromTimestamp, Contract §ToTimestamp]
+- [x] CHK008 Is the meaning of a “partial” whole-device result defined with enough precision that clients can distinguish filtered data from missing telemetry? [Clarity, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse]
+- [x] CHK009 Is “same success or failure outcome and equivalent business data” between REST and MCP defined precisely enough to know which fields, statuses, and error classes must align? [Ambiguity, Spec §FR-009, Contract §REST, Contract §MCP]
+- [x] CHK010 Are registration output requirements clear about whether the returned token includes expiry, issuer, or other mandatory claims beyond `sub`, `publ`, and `subs`? [Gap, Spec §FR-022, Data Model §RegistrationGrant, Research §JWT]
 
 ## Requirement Consistency
 
-- [ ] CHK011 Do the spec, data model, and REST contract all agree that registration is protected by wildcard `publ` and `subs` topic filters covering the requested account/device namespace? [Consistency, Spec §FR-019, Data Model §RegistrationGrant, Contract §/registration]
-- [ ] CHK012 Do the spec and data model agree on the issued registration credential shape `sub=account_id/device_id/device_instance_id`, `publ=[.../+/+]`, and `subs=[.../+/+/set]` without conflicting wildcard depth? [Consistency, Spec §FR-022, Data Model §RegistrationGrant]
-- [ ] CHK013 Do the whole-device read requirements, data model, and contracts describe partial snapshots consistently across business rules and response shape? [Consistency, Spec §FR-006, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse, Contract §MCP]
-- [ ] CHK014 Do the history requirements in the spec match the contracts in using explicit `from` and `to` timestamps rather than the older `since` query style from the source description? [Consistency, Spec §FR-003, Spec §FR-004, Spec §FR-024, Contract §REST]
-- [ ] CHK015 Do the command requirements align with the existing MQTT `/set` topic XDR without redefining the command path differently in the feature docs? [Consistency, Spec §FR-016, XDR §_local-bdr-001]
+- [x] CHK011 Do the spec, data model, and REST contract all agree that registration is protected by wildcard `publ` and `subs` topic filters covering the requested account/device namespace? [Consistency, Spec §FR-019, Data Model §RegistrationGrant, Contract §/registration]
+- [x] CHK012 Do the spec and data model agree on the issued registration credential shape `sub=account_id/device_id/device_instance_id`, `publ=[.../+/+]`, and `subs=[.../+/+/set]` without conflicting wildcard depth? [Consistency, Spec §FR-022, Data Model §RegistrationGrant]
+- [x] CHK013 Do the whole-device read requirements, data model, and contracts describe partial snapshots consistently across business rules and response shape? [Consistency, Spec §FR-006, Spec §FR-007, Data Model §DeviceStateSnapshot, Contract §DeviceStateResponse, Contract §MCP]
+- [x] CHK014 Do the history requirements in the spec match the contracts in using explicit `from` and `to` timestamps rather than the older `since` query style from the source description? [Consistency, Spec §FR-003, Spec §FR-004, Spec §FR-024, Contract §REST]
+- [x] CHK015 Do the command requirements align with the existing MQTT `/set` topic XDR without redefining the command path differently in the feature docs? [Consistency, Spec §FR-016, XDR §_local-bdr-001]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK016 Are the success criteria measurable for all critical operation families, including registration and cross-surface parity, rather than only read latency and authorization denial? [Acceptance Criteria, Spec §SC-001, Spec §SC-002, Spec §SC-003, Spec §SC-005, Spec §SC-006]
-- [ ] CHK017 Are success criteria defined for desired-state publication durability or acknowledgement semantics strongly enough to make command success objectively testable? [Gap, Spec §SC-004, Spec §FR-015, Spec §FR-017]
-- [ ] CHK018 Are the current-state and history performance targets bounded by request shape or result size so the criteria remain objectively achievable? [Measurability, Spec §SC-001, Spec §SC-002, Spec §FR-024]
+- [x] CHK016 Are the success criteria measurable for all critical operation families, including registration and cross-surface parity, rather than only read latency and authorization denial? [Acceptance Criteria, Spec §SC-001, Spec §SC-002, Spec §SC-003, Spec §SC-005, Spec §SC-006]
+- [x] CHK017 Are success criteria defined for desired-state publication durability or acknowledgement semantics strongly enough to make command success objectively testable? [Gap, Spec §SC-004, Spec §FR-015, Spec §FR-017]
+- [x] CHK018 Are the current-state and history performance targets bounded by request shape or result size so the criteria remain objectively achievable? [Measurability, Spec §SC-001, Spec §SC-002, Spec §FR-024]
 
 ## Scenario Coverage
 
-- [ ] CHK019 Are requirements specified for both attribute-level and whole-device reads under partial authorization, not only one of those scenarios? [Coverage, Spec §FR-001, Spec §FR-002, Spec §FR-006, Spec §FR-007]
-- [ ] CHK020 Are both node-level and attribute-level history scenarios covered with equivalent authorization, validation, and empty-result rules? [Coverage, Spec §FR-003, Spec §FR-004, Spec §FR-024, Spec §FR-025]
-- [ ] CHK021 Are registration scenarios defined for authorized creation, denied creation, and repeated creation within the same account/device scope? [Coverage, Spec §FR-019, Spec §FR-021, Edge Case]
-- [ ] CHK022 Are parity requirements defined for both successful responses and failure modes across REST and MCP, rather than only successful business results? [Coverage, Spec §FR-009, Edge Case, Contract §MCP]
+- [x] CHK019 Are requirements specified for both attribute-level and whole-device reads under partial authorization, not only one of those scenarios? [Coverage, Spec §FR-001, Spec §FR-002, Spec §FR-006, Spec §FR-007]
+- [x] CHK020 Are both node-level and attribute-level history scenarios covered with equivalent authorization, validation, and empty-result rules? [Coverage, Spec §FR-003, Spec §FR-004, Spec §FR-024, Spec §FR-025]
+- [x] CHK021 Are registration scenarios defined for authorized creation, denied creation, and repeated creation within the same account/device scope? [Coverage, Spec §FR-019, Spec §FR-021, Edge Case]
+- [x] CHK022 Are parity requirements defined for both successful responses and failure modes across REST and MCP, rather than only successful business results? [Coverage, Spec §FR-009, Edge Case, Contract §MCP]
 
 ## Edge Case Coverage
 
-- [ ] CHK023 Are malformed path handling requirements explicit for every route shape, including device-level reads, attribute reads, history routes, and registration inputs? [Coverage, Spec §FR-023, Edge Case]
-- [ ] CHK024 Are wildcard authorization edge cases defined clearly enough to prevent ambiguity about MQTT `+` and `#` topic-filter semantics across telemetry and `/set` topics? [Clarity, Spec §FR-013, Spec §FR-020, Data Model §JWTAccessClaims]
-- [ ] CHK025 Does the feature define how history ordering should behave when multiple observations share the same timestamp? [Gap, Data Model §DeviceObservation, Plan §Technical Context]
-- [ ] CHK026 Are no-data scenarios distinguished from forbidden scenarios for both current-state and history queries in a way that prevents accidental data disclosure? [Coverage, Spec §FR-014, Spec §FR-025]
+- [x] CHK023 Are malformed path handling requirements explicit for every route shape, including device-level reads, attribute reads, history routes, and registration inputs? [Coverage, Spec §FR-023, Edge Case]
+- [x] CHK024 Are wildcard authorization edge cases defined clearly enough to prevent ambiguity about MQTT `+` and `#` topic-filter semantics across telemetry and `/set` topics? [Clarity, Spec §FR-013, Spec §FR-020, Data Model §JWTAccessClaims]
+- [x] CHK025 Does the feature define how history ordering should behave when multiple observations share the same timestamp? [Gap, Data Model §DeviceObservation, Plan §Technical Context]
+- [x] CHK026 Are no-data scenarios distinguished from forbidden scenarios for both current-state and history queries in a way that prevents accidental data disclosure? [Coverage, Spec §FR-014, Spec §FR-025]
 
 ## Non-Functional Requirements
 
-- [ ] CHK027 Are maximum-result or other bounding requirements defined for large history windows so the feature’s behavior is bounded under heavy result sets even without pagination? [Gap, Edge Case, Contract §HistoryResponse, Plan §Technical Context]
-- [ ] CHK028 Are bearer-token lifetime, shared base64 signing-secret management, and rotation requirements documented if registration-issued credentials are intended for real device use? [Gap, Research §JWT, Spec §FR-022]
-- [ ] CHK029 Are observability and audit requirements specified for auth denials, registration issuance, and desired-state publication failures? [Gap]
-- [ ] CHK030 Are MCP transport requirements defined tightly enough to know whether the same bearer token is conveyed per HTTP request, per session, or by some other mechanism? [Gap, Contract §MCP]
+- [x] CHK027 Are maximum-result or other bounding requirements defined for large history windows so the feature’s behavior is bounded under heavy result sets even without pagination? [Gap, Edge Case, Contract §HistoryResponse, Plan §Technical Context]
+- [x] CHK028 Are bearer-token lifetime, shared base64 signing-secret management, and rotation requirements documented if registration-issued credentials are intended for real device use? [Gap, Research §JWT, Spec §FR-022]
+- [x] CHK029 Are observability and audit requirements specified for auth denials, registration issuance, and desired-state publication failures? [Gap]
+- [x] CHK030 Are MCP transport requirements defined tightly enough to know whether the same bearer token is conveyed per HTTP request, per session, or by some other mechanism? [Gap, Contract §MCP]
 
 ## Dependencies & Assumptions
 
-- [ ] CHK031 Are dependencies on the existing bridge storage model and MQTT topic XDRs explicitly traceable wherever read and command behavior relies on them? [Dependency, Spec §Assumptions, XDR §_local-bdr-001, XDR §_local-bdr-002]
-- [ ] CHK032 Are assumptions about local one-command startup separated clearly from mandatory product behavior so environment convenience does not become an implicit runtime requirement? [Assumption, Spec §FR-027, XDR §_local-edr-002]
-- [ ] CHK033 Are the contracts and plan explicit about which parts of the implementation are net-new versus reused from the bridge, so missing responsibilities are not hidden behind reuse assumptions? [Assumption, Plan §Summary, Plan §Project Structure]
+- [x] CHK031 Are dependencies on the existing bridge storage model and MQTT topic XDRs explicitly traceable wherever read and command behavior relies on them? [Dependency, Spec §Assumptions, XDR §_local-bdr-001, XDR §_local-bdr-002]
+- [x] CHK032 Are assumptions about local one-command startup separated clearly from mandatory product behavior so environment convenience does not become an implicit runtime requirement? [Assumption, Spec §FR-027, XDR §_local-edr-002]
+- [x] CHK033 Are the contracts and plan explicit about which parts of the implementation are net-new versus reused from the bridge, so missing responsibilities are not hidden behind reuse assumptions? [Assumption, Plan §Summary, Plan §Project Structure]
 
 ## Ambiguities & Conflicts
 
-- [ ] CHK034 Is the mapping from MQTT topic filters to REST/MCP authorization explicit enough that readers can tell why current-state/history use telemetry filters while desired-state writes use `/set` filters? [Conflict, Spec §FR-014, Spec §FR-016]
-- [ ] CHK035 Is the relationship between the original source excerpt’s `since=2d` examples and the clarified `from`/`to` contract explicitly resolved for downstream consumers? [Conflict, Source Spec, Spec §Clarifications, Contract §REST]
-- [ ] CHK036 Are registration requirements clear on whether uniqueness must be globally random, sequential, or deterministic within `(account_id, device_id)`? [Ambiguity, Spec §FR-021]
+- [x] CHK034 Is the mapping from MQTT topic filters to REST/MCP authorization explicit enough that readers can tell why current-state/history use telemetry filters while desired-state writes use `/set` filters? [Conflict, Spec §FR-014, Spec §FR-016]
+- [x] CHK035 Is the relationship between the original source excerpt’s `since=2d` examples and the clarified `from`/`to` contract explicitly resolved for downstream consumers? [Conflict, Source Spec, Spec §Clarifications, Contract §REST]
+- [x] CHK036 Are registration requirements clear on whether uniqueness must be globally random, sequential, or deterministic within `(account_id, device_id)`? [Ambiguity, Spec §FR-021]
 
 ## Notes
 
