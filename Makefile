@@ -39,3 +39,7 @@ setup:
 	@echo "Install Mise: https://mise.jdx.dev/getting-started.html"
 	@echo "Then run: mise install"
 	@echo "See README.md for full setup instructions."
+
+bump:
+	@echo "Bumping xdrs core..."
+	npx -y xdrs-core@latest

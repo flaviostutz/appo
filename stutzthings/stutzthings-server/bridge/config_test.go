@@ -37,6 +37,10 @@ func TestLoadConfigUsesDefaultBridgeJSON(t *testing.T) {
 	assert.Equal(t, defaultFlushIntervalMs, config.FlushIntervalMs)
 	assert.Equal(t, defaultMaxBufferSize, config.MaxBufferSize)
 	assert.Equal(t, defaultMaxWriteRetries, config.MaxWriteRetries)
+	assert.Equal(t, defaultHTTPAddr, config.HTTPAddr)
+	assert.Equal(t, defaultJWTSecretBase64, config.JWTSecretBase64)
+	assert.Equal(t, defaultJWTIssuer, config.JWTIssuer)
+	assert.Equal(t, defaultJWTTokenTTL, config.JWTTokenTTL)
 }
 
 func TestLoadConfigFallsBackToEnvWhenDefaultFileMissing(t *testing.T) {
@@ -52,6 +56,10 @@ func TestLoadConfigFallsBackToEnvWhenDefaultFileMissing(t *testing.T) {
 	t.Setenv("BRIDGE_FLUSH_INTERVAL_MS", "250")
 	t.Setenv("BRIDGE_MAX_BUFFER_SIZE", "500")
 	t.Setenv("BRIDGE_MAX_WRITE_RETRIES", "2")
+	t.Setenv("HTTP_ADDR", ":9090")
+	t.Setenv("JWT_SIGNING_SECRET_BASE64", "ZW52LXNlY3JldA==")
+	t.Setenv("JWT_ISSUER", "env-issuer")
+	t.Setenv("JWT_TOKEN_TTL", "48h")
 
 	configDir := t.TempDir()
 	restoreCWD := chdirForTest(t, configDir)
@@ -66,12 +74,16 @@ func TestLoadConfigFallsBackToEnvWhenDefaultFileMissing(t *testing.T) {
 	assert.Equal(t, 250, config.FlushIntervalMs)
 	assert.Equal(t, 500, config.MaxBufferSize)
 	assert.Equal(t, 2, config.MaxWriteRetries)
+	assert.Equal(t, ":9090", config.HTTPAddr)
+	assert.Equal(t, "ZW52LXNlY3JldA==", config.JWTSecretBase64)
+	assert.Equal(t, "env-issuer", config.JWTIssuer)
+	assert.Equal(t, "48h", config.JWTTokenTTL)
 }
 
 func TestLoadConfigFromFileSupportsExplicitPath(t *testing.T) {
 	clearBridgeEnv(t)
 	configDir := t.TempDir()
-	configPath := filepath.Join(configDir, "custom-bridge.json")
+	configPath := filepath.Join(configDir, "custom-stutzthingsrc.json")
 	require.NoError(t, os.WriteFile(configPath, []byte(`{
 		"mqttBrokerUrl": "mqtt://example:1883",
 		"mqttUsername": "custom-user",
@@ -83,7 +95,11 @@ func TestLoadConfigFromFileSupportsExplicitPath(t *testing.T) {
 		"batchSize": 7,
 		"flushIntervalMs": 150,
 		"maxBufferSize": 14,
-		"maxWriteRetries": 0
+		"maxWriteRetries": 0,
+		"httpAddr": ":8181",
+		"jwtSigningSecretBase64": "Y3VzdG9tLXNlY3JldA==",
+		"jwtIssuer": "custom-issuer",
+		"jwtTokenTtl": "12h"
 	}`), 0o600))
 	t.Setenv("BRIDGE_CONFIG_PATH", configPath)
 
@@ -100,6 +116,10 @@ func TestLoadConfigFromFileSupportsExplicitPath(t *testing.T) {
 	assert.Equal(t, 150, config.FlushIntervalMs)
 	assert.Equal(t, 14, config.MaxBufferSize)
 	assert.Equal(t, 0, config.MaxWriteRetries)
+	assert.Equal(t, ":8181", config.HTTPAddr)
+	assert.Equal(t, "Y3VzdG9tLXNlY3JldA==", config.JWTSecretBase64)
+	assert.Equal(t, "custom-issuer", config.JWTIssuer)
+	assert.Equal(t, "12h", config.JWTTokenTTL)
 }
 
 func clearBridgeEnv(t *testing.T) {
@@ -117,6 +137,10 @@ func clearBridgeEnv(t *testing.T) {
 		"BRIDGE_FLUSH_INTERVAL_MS",
 		"BRIDGE_MAX_BUFFER_SIZE",
 		"BRIDGE_MAX_WRITE_RETRIES",
+		"HTTP_ADDR",
+		"JWT_SIGNING_SECRET_BASE64",
+		"JWT_ISSUER",
+		"JWT_TOKEN_TTL",
 	} {
 		t.Setenv(name, "")
 	}

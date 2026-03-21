@@ -273,7 +273,7 @@ func startJWTMosquittoStack(ctx context.Context, t *testing.T) jwtMosquittoStack
 		t.Skip("docker is not available for MQTT interoperability tests in this environment")
 	}
 	pluginPath := mqttPluginPathForDocker(t)
-	secretB64 := defaultJWTSigningSecretBase64
+	secretB64 := bridge.DefaultJWTSecretBase64()
 	secret, err := auth.DecodeBase64Secret(secretB64)
 	require.NoError(t, err)
 	signer, err := auth.NewSigner(secret, "issuer", time.Hour)

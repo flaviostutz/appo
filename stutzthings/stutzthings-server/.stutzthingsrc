@@ -9,5 +9,9 @@
   "batchSize": 100,
   "flushIntervalMs": 100,
   "maxBufferSize": 10000,
-  "maxWriteRetries": 3
+  "maxWriteRetries": 3,
+  "httpAddr": ":8080",
+  "jwtSigningSecretBase64": "ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl",
+  "jwtIssuer": "stutzthings-server-dev",
+  "jwtTokenTtl": "24h"
 }

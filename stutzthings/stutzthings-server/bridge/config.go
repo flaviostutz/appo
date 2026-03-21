@@ -11,11 +11,15 @@ import (
 )
 
 const (
-	defaultConfigPath      = "bridge.json"
+	defaultConfigPath      = ".stutzthingsrc"
 	defaultBatchSize       = 100
 	defaultFlushIntervalMs = 100
 	defaultMaxBufferSize   = 10000
 	defaultMaxWriteRetries = 3
+	defaultHTTPAddr        = ":8080"
+	defaultJWTIssuer       = "stutzthings-server-dev"
+	defaultJWTTokenTTL     = "24h"
+	defaultJWTSecretBase64 = "ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl"
 
 	measurementName = "device_attributes"
 
@@ -36,6 +40,10 @@ type BridgeConfig struct {
 	FlushIntervalMs  int
 	MaxBufferSize    int
 	MaxWriteRetries  int
+	HTTPAddr         string
+	JWTSecretBase64  string
+	JWTIssuer        string
+	JWTTokenTTL      string
 }
 
 type MQTTMessage struct {
@@ -77,6 +85,10 @@ type bridgeConfigFile struct {
 	FlushIntervalMs  *int   `json:"flushIntervalMs"`
 	MaxBufferSize    *int   `json:"maxBufferSize"`
 	MaxWriteRetries  *int   `json:"maxWriteRetries"`
+	HTTPAddr         string `json:"httpAddr"`
+	JWTSecretBase64  string `json:"jwtSigningSecretBase64"`
+	JWTIssuer        string `json:"jwtIssuer"`
+	JWTTokenTTL      string `json:"jwtTokenTtl"`
 }
 
 func LoadConfig() (BridgeConfig, error) {
@@ -95,6 +107,10 @@ func LoadConfig() (BridgeConfig, error) {
 	}
 
 	return BridgeConfig{}, fmt.Errorf("load config file %q: %w", configPath, err)
+}
+
+func DefaultJWTSecretBase64() string {
+	return defaultJWTSecretBase64
 }
 
 func LoadConfigFromFile(path string) (BridgeConfig, error) {
@@ -125,6 +141,10 @@ func LoadConfigFromFile(path string) (BridgeConfig, error) {
 		FlushIntervalMs:  intOrDefault(fileConfig.FlushIntervalMs, defaultFlushIntervalMs),
 		MaxBufferSize:    intOrDefault(fileConfig.MaxBufferSize, defaultMaxBufferSize),
 		MaxWriteRetries:  intOrDefault(fileConfig.MaxWriteRetries, defaultMaxWriteRetries),
+		HTTPAddr:         stringOrDefault(fileConfig.HTTPAddr, defaultHTTPAddr),
+		JWTSecretBase64:  stringOrDefault(fileConfig.JWTSecretBase64, defaultJWTSecretBase64),
+		JWTIssuer:        stringOrDefault(fileConfig.JWTIssuer, defaultJWTIssuer),
+		JWTTokenTTL:      stringOrDefault(fileConfig.JWTTokenTTL, defaultJWTTokenTTL),
 	}
 
 	if err := config.Validate(); err != nil {
@@ -147,6 +167,10 @@ func LoadConfigFromEnv() (BridgeConfig, error) {
 		MaxBufferSize:    envInt("BRIDGE_MAX_BUFFER_SIZE", defaultMaxBufferSize),
 		MaxWriteRetries:  envInt("BRIDGE_MAX_WRITE_RETRIES", defaultMaxWriteRetries),
 		MQTTTLSEnabled:   envBool("MQTT_TLS_ENABLED", false),
+		HTTPAddr:         envString("HTTP_ADDR", defaultHTTPAddr),
+		JWTSecretBase64:  envString("JWT_SIGNING_SECRET_BASE64", defaultJWTSecretBase64),
+		JWTIssuer:        envString("JWT_ISSUER", defaultJWTIssuer),
+		JWTTokenTTL:      envString("JWT_TOKEN_TTL", defaultJWTTokenTTL),
 	}
 
 	if err := config.Validate(); err != nil {
@@ -231,6 +255,14 @@ func envBool(name string, fallback bool) bool {
 	return parsed
 }
 
+func envString(name string, fallback string) string {
+	value := strings.TrimSpace(os.Getenv(name))
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
 func envInt(name string, fallback int) int {
 	value := strings.TrimSpace(os.Getenv(name))
 	if value == "" {
@@ -255,4 +287,12 @@ func intOrDefault(value *int, fallback int) int {
 		return fallback
 	}
 	return *value
+}
+
+func stringOrDefault(value string, fallback string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return fallback
+	}
+	return trimmed
 }

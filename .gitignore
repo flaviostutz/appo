@@ -17,3 +17,5 @@ stutzthings/stutzthings-server/influxdb3-data/
 stutzthings/stutzthings-server/examples/local/.data/
 stutzthings/stutzthings-server/examples/local/.logs/
 stutzthings/stutzthings-server/examples/local/.run/
+
+node_modules

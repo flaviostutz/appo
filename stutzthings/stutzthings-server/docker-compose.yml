@@ -1,9 +1,6 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: stutzthings-mosquitto
-    environment:
-      JWT_SIGNING_SECRET_BASE64: ${JWT_SIGNING_SECRET_BASE64:-ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl}
+    image: nn-docker.artifactory.insim.biz/eclipse-mosquitto:2
     command:
       - /bin/sh
       - -ec
@@ -13,7 +10,7 @@ services:
         allow_anonymous false
         auth_plugin /mosquitto/auth/libmosquitto_jwt_auth.so
         auth_opt_jwt_alg HS256
-        auth_opt_jwt_sec_env JWT_SIGNING_SECRET_BASE64
+        auth_opt_jwt_sec_env ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl
         auth_opt_jwt_validate_exp true
         auth_opt_jwt_validate_sub_match_username true
         persistence false
@@ -21,22 +18,23 @@ services:
         exec mosquitto -c /mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
-    volumes:
-      - ${MOSQUITTO_JWT_AUTH_SO:?set MOSQUITTO_JWT_AUTH_SO}:/mosquitto/auth/libmosquitto_jwt_auth.so:ro
 
   influxdb:
-    image: influxdb:3-core
-    container_name: stutzthings-influxdb3
+    image: nn-docker.artifactory.insim.biz/influxdb:3-core
     command:
-      - influxdb3
-      - serve
-      - --node-id=node0
-      - --object-store=file
-      - --data-dir=/var/lib/influxdb3/data
-      - --http-bind=0.0.0.0:8086
-      - --admin-token-file=/run/secrets/admin-token
+      - /bin/sh
+      - -ec
+      - |
+        cat > /var/lib/influxdb3/admin-token.json <<'EOF'
+        {"token":"apiv3_dev_token_local_only","name":"admin","description":"Local development token for stutzthings-server"}
+        EOF
+        exec influxdb3 serve \
+          --node-id=node0 \
+          --object-store=file \
+          --data-dir=/var/lib/influxdb3/data \
+          --http-bind=0.0.0.0:8086 \
+          --admin-token-file=/var/lib/influxdb3/admin-token.json
     ports:
       - "8086:8086"
     volumes:
-      - ./influxdb3-data:/var/lib/influxdb3/data
-      - ./.docker/influxdb/admin-token.json:/run/secrets/admin-token:ro
+      - ./.docker/influxdb3-data:/var/lib/influxdb3/data

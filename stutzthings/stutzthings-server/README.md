@@ -16,15 +16,17 @@ If Docker cannot pull `eclipse-mosquitto:2` or `influxdb:3-core` on your machine
 
 `make run` now expects the Mosquitto JWT auth plugin shared library path in `MOSQUITTO_JWT_AUTH_SO` and uses the same `JWT_SIGNING_SECRET_BASE64` value for both the Go service and Mosquitto.
 
+`make dev` downloads the published Mosquitto JWT auth plugin into `./.docker/` when needed, replaces corrupt zero-byte artifacts automatically, and runs the Mosquitto container as `linux/amd64` so the released `x86-64` plugin works on Apple Silicon hosts.
+
 ```sh
 curl -i http://localhost:8080/health
 ```
 
 The bridge loads its runtime settings from environment variables and exposes dependency-aware health at `GET /health`. The same process is also the planned home for protected REST routes and the `/mcp` endpoint.
 
-By default the bridge loads runtime settings from `bridge.json` in the current working directory. If that file is absent, it falls back to environment variables. Set `BRIDGE_CONFIG_PATH` to load a different JSON file.
+By default the bridge loads runtime settings from `.stutzthingsrc` in the current working directory. If that file is absent, it falls back to environment variables. Set `BRIDGE_CONFIG_PATH` to load a different JSON file.
 
-Example `bridge.json`:
+Example `.stutzthingsrc`:
 
 ```json
 {
@@ -38,13 +40,17 @@ Example `bridge.json`:
 	"batchSize": 100,
 	"flushIntervalMs": 100,
 	"maxBufferSize": 10000,
-	"maxWriteRetries": 3
+	"maxWriteRetries": 3,
+	"httpAddr": ":8080",
+	"jwtSigningSecretBase64": "ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl",
+	"jwtIssuer": "stutzthings-server-dev",
+	"jwtTokenTtl": "24h"
 }
 ```
 
 ## Configuration
 
-`bridge.json` required fields:
+`.stutzthingsrc` required fields:
 
 - `mqttBrokerUrl`
 - `mqttUsername`
@@ -60,6 +66,10 @@ Optional fields:
 - `flushIntervalMs` default `100`
 - `maxBufferSize` default `10000`
 - `maxWriteRetries` default `3`
+- `httpAddr` default `:8080`
+- `jwtSigningSecretBase64` default base64-encoded local development secret
+- `jwtIssuer` default `stutzthings-server-dev`
+- `jwtTokenTtl` default `24h`
 
 ## Environment Fallback
 
@@ -95,10 +105,11 @@ Optional variables:
 - `make coverage` generates the unit coverage report without enforcing the threshold
 - `make health` checks `GET /health` on the locally running server
 - `make run` verifies Docker access, requires the Mosquitto JWT plugin path, starts the local Docker stack, and runs the server
+- `make dev` refreshes the local Mosquitto JWT plugin if needed, starts the Docker stack with Mosquitto pinned to `linux/amd64`, and then runs the server
 
 ## Local Example Stack
 
-For a local development flow with containerized infrastructure, use `examples/local/README.md`. It includes a dedicated `docker-compose.yml`, `Makefile`, `bridge.json`, an InfluxDB admin token file, Grafana provisioning, and Mosquitto JWT plugin wiring for running Mosquitto, InfluxDB, and Grafana in Docker while keeping the Go bridge on the host machine.
+For a local development flow with containerized infrastructure, use `examples/local/README.md`. It includes a dedicated `docker-compose.yml`, `Makefile`, `.stutzthingsrc`, an InfluxDB admin token file, Grafana provisioning, and Mosquitto JWT plugin wiring for running Mosquitto, InfluxDB, and Grafana in Docker while keeping the Go bridge on the host machine.
 
 ## Layout
 

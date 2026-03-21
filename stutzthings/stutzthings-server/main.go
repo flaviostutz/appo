@@ -17,19 +17,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const defaultJWTSigningSecretBase64 = "ZGV2X2p3dF9zZWNyZXRfbG9jYWxfb25seV9wbGVhc2VfY2hhbmdl"
-
 func main() {
 	logger := newLogger()
 
 	config, err := bridge.LoadConfig()
 	if err != nil {
 		logger.WithError(err).Fatal("load bridge config")
-	}
-
-	httpAddr := os.Getenv("HTTP_ADDR")
-	if httpAddr == "" {
-		httpAddr = ":8080"
 	}
 
 	runtimeBridge, err := bridge.NewBridge(config, logger)
@@ -44,15 +37,15 @@ func main() {
 		logger.WithError(err).Fatal("start bridge")
 	}
 
-	jwtSecret, err := auth.DecodeBase64Secret(envOrDefault("JWT_SIGNING_SECRET_BASE64", defaultJWTSigningSecretBase64))
+	jwtSecret, err := auth.DecodeBase64Secret(config.JWTSecretBase64)
 	if err != nil {
 		logger.WithError(err).Fatal("load jwt signing secret")
 	}
-	jwtTTL, err := time.ParseDuration(envOrDefault("JWT_TOKEN_TTL", "24h"))
+	jwtTTL, err := time.ParseDuration(config.JWTTokenTTL)
 	if err != nil {
 		logger.WithError(err).Fatal("parse jwt token ttl")
 	}
-	signer, err := auth.NewSigner(jwtSecret, envOrDefault("JWT_ISSUER", "stutzthings-server-dev"), jwtTTL)
+	signer, err := auth.NewSigner(jwtSecret, config.JWTIssuer, jwtTTL)
 	if err != nil {
 		logger.WithError(err).Fatal("create jwt signer")
 	}
@@ -60,8 +53,8 @@ func main() {
 	authenticator := auth.NewBearerAuthenticator(jwtSecret)
 
 	server := &http.Server{
-		Addr:              httpAddr,
-		Handler:           newHTTPHandler(service, authenticator, runtimeBridge.CheckHealth, baseURLForAddr(httpAddr)),
+		Addr:              config.HTTPAddr,
+		Handler:           newHTTPHandler(service, authenticator, runtimeBridge.CheckHealth, baseURLForAddr(config.HTTPAddr)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -72,7 +65,7 @@ func main() {
 		_ = server.Shutdown(shutdownCtx)
 	}()
 
-	logger.WithField("addr", httpAddr).Info("health endpoint listening")
+	logger.WithField("addr", config.HTTPAddr).Info("health endpoint listening")
 	err = server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.WithError(err).Fatal("http server failed")
@@ -126,14 +119,6 @@ func httpStatusForHealth(health string) int {
 	default:
 		return http.StatusServiceUnavailable
 	}
-}
-
-func envOrDefault(name string, fallback string) string {
-	value := strings.TrimSpace(os.Getenv(name))
-	if value == "" {
-		return fallback
-	}
-	return value
 }
 
 func baseURLForAddr(addr string) string {
