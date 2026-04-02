@@ -171,21 +171,7 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. **Identify XDR candidates**: Scan the completed spec for decisions that should become durable
-   XDR records. Append an "## XDR Candidates" section to the spec file listing candidate topics:
-
-   - For each functional requirement or key entity that encodes a **product/business rule** (e.g.,
-     data schemas, multi-tenancy rules, topic structures, retention policies) → candidate **BDR**.
-   - For each **architectural choice** implied by the spec (e.g., communication protocols, component
-     boundaries, integration points) → candidate **ADR**.
-   - For each **engineering convention** specific to this feature (e.g., retry policies, error
-     handling patterns, configuration approach) → candidate **EDR**.
-
-   Format the section as a short bullet list: `- [BDR/ADR/EDR] <topic> — <one-line rationale>`.
-   Mark existing XDRs (already in `.xdrs/_local/`) with `(exists: path/to/xdr.md)`.
-   The `speckit.plan` command will create/update the actual XDR files from this list.
-
-8. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
+7. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
 
 **NOTE:** The script creates and checks out the new branch and initializes the spec file before writing.
 

@@ -82,22 +82,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Add only new technology from current plan
    - Preserve manual additions between markers
 
-4. **XDR sync** (Constitution Principle VI — mandatory):
-   - Read the "XDR Candidates" section from the feature spec (added by `speckit.specify`).
-   - For each candidate, check `.xdrs/_local/` for an existing XDR covering the same decision.
-   - **If an XDR already exists**: update it in-place with any new details from this feature's
-     design; keep the document short (≤ 2 screens, one decision per file).
-   - **If no XDR exists**: create a new file in the appropriate subdirectory:
-     - BDR → `.xdrs/_local/bdrs/<subject>/<NNN>-<slug>.md`
-     - ADR → `.xdrs/_local/adrs/<subject>/<NNN>-<slug>.md`
-     - EDR → `.xdrs/_local/edrs/<subject>/<NNN>-<slug>.md`
-   - Use the existing `.xdrs/_local/bdrs/product/001-mqtt-topic-structure.md` as the style
-     reference (Context, Decision Outcome, Implementation Details, Considered Options, References).
-   - After creating/updating each XDR, add or update its entry in the matching index
-     (`.xdrs/_local/{bdrs|adrs|edrs}/index.md`).
-   - Add a reference back to the feature spec and plan from the XDR's References section.
-
-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file, updated `.xdrs/_local/`
+**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
 
 ## Key rules
 
